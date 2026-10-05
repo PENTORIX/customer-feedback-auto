@@ -1,42 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#0b0d12">
-<meta
-  name="description"
-  content="John Wayne PHC Feedback Center — customer transaction feedback and resolved support issues."
->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>John Wayne • Customer Feedback</title>
+  <meta name="theme-color" content="#0b0d12">
 
-<!-- Website favicon -->
-<link rel="icon" type="image/png" href="images/jw-logo.png">
+  <meta
+    name="description"
+    content="John Wayne PHC Feedback Center — customer transaction feedback and resolved support issues."
+  >
 
-<link rel="stylesheet" href="style.css">
+  <title>John Wayne • Customer Feedback</title>
+
+  <link
+    rel="icon"
+    type="image/png"
+    href="/images/jw-logo.png?v=2"
+  >
+
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-
-  <!-- =========================================================
-       BACKGROUND GLOW
-       ========================================================= -->
 
   <div class="page-glow page-glow-one"></div>
   <div class="page-glow page-glow-two"></div>
 
 
-  <!-- =========================================================
+  <!-- ========================================================
        HEADER
-       ========================================================= -->
+  ========================================================= -->
 
   <header class="header">
+
     <div class="container header-inner">
 
       <div class="brand-block">
 
-        <div class="brand-mark" aria-hidden="true">
+        <div class="brand-mark">
           JW
         </div>
 
@@ -70,19 +72,117 @@
       </div>
 
     </div>
+
   </header>
 
 
-
-  <!-- =========================================================
-       MAIN CONTENT
-       ========================================================= -->
-
   <main class="container main-content">
 
-    <!-- =======================================================
+
+    <!-- ======================================================
+         STATISTICS
+    ======================================================= -->
+
+    <section class="stats" aria-label="Feedback statistics">
+
+      <div class="stat-card">
+
+        <div class="stat-icon">
+          ★
+        </div>
+
+        <div>
+          <span class="stat-label">
+            TOTAL TRANSACTIONS
+          </span>
+
+          <strong
+            id="totalTransactions"
+            class="stat-number"
+          >
+            0
+          </strong>
+        </div>
+
+      </div>
+
+
+      <div class="stat-card">
+
+        <div class="stat-icon resolved-stat">
+          ✓
+        </div>
+
+        <div>
+          <span class="stat-label">
+            RESOLVED ISSUES
+          </span>
+
+          <strong
+            id="totalResolved"
+            class="stat-number"
+          >
+            0
+          </strong>
+        </div>
+
+      </div>
+
+
+      <div class="stat-card">
+
+        <div class="stat-icon platform-stat">
+          ◈
+        </div>
+
+        <div>
+          <span class="stat-label">
+            PLATFORMS
+          </span>
+
+          <strong
+            id="totalPlatforms"
+            class="stat-number"
+          >
+            0
+          </strong>
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- ======================================================
+         VERIFICATION NOTICE
+    ======================================================= -->
+
+    <div class="verification-notice">
+
+      <div class="verification-icon">
+        ✓
+      </div>
+
+      <div>
+
+        <strong>
+          Transaction Evidence
+        </strong>
+
+        <p>
+          Screenshots displayed on this page are submitted
+          transaction feedback and are presented for reference
+          purposes.
+        </p>
+
+      </div>
+
+    </div>
+
+
+    <!-- ======================================================
          TABS
-         ======================================================= -->
+    ======================================================= -->
 
     <div class="tabs-wrap">
 
@@ -98,7 +198,7 @@
           role="tab"
           aria-selected="true"
         >
-          <span class="tab-icon" aria-hidden="true">
+          <span class="tab-icon">
             ★
           </span>
 
@@ -112,7 +212,7 @@
           role="tab"
           aria-selected="false"
         >
-          <span class="tab-icon" aria-hidden="true">
+          <span class="tab-icon">
             ✓
           </span>
 
@@ -124,10 +224,7 @@
 
       <div class="trust-note">
 
-        <span
-          class="trust-dot"
-          aria-hidden="true"
-        ></span>
+        <span class="trust-dot"></span>
 
         Verified transaction screenshots
 
@@ -136,12 +233,49 @@
     </div>
 
 
+    <!-- ======================================================
+         LATEST TRANSACTIONS
+    ======================================================= -->
 
-    <!-- =======================================================
-         CUSTOMER FEEDBACK SECTION
-         ======================================================= -->
+    <section
+      id="latestSection"
+      class="latest-section"
+    >
 
-    <div id="feedbackSection">
+      <div class="section-head latest-head">
+
+        <div>
+
+          <span class="section-kicker">
+            RECENT ACTIVITY
+          </span>
+
+          <h2>
+            Latest Transactions
+          </h2>
+
+          <p>
+            Recently indexed customer feedback.
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <div
+        id="latestGrid"
+        class="latest-grid"
+      ></div>
+
+    </section>
+
+
+    <!-- ======================================================
+         CUSTOMER FEEDBACK
+    ======================================================= -->
+
+    <section id="feedbackSection">
 
       <div class="section-head">
 
@@ -175,15 +309,14 @@
         class="grid"
       ></div>
 
-    </div>
+    </section>
 
 
+    <!-- ======================================================
+         RESOLVED ISSUES
+    ======================================================= -->
 
-    <!-- =======================================================
-         RESOLVED ISSUES SECTION
-         ======================================================= -->
-
-    <div
+    <section
       id="resolvedSection"
       class="hidden"
     >
@@ -220,170 +353,145 @@
         class="grid"
       ></div>
 
-    </div>
+    </section>
+
+
+    <!-- ======================================================
+         CONTACT SUPPORT
+    ======================================================= -->
+
+    <section class="support-section">
+
+      <div class="support-header">
+
+        <div>
+
+          <span class="section-kicker">
+            NEED HELP?
+          </span>
+
+          <h2>
+            Contact Support
+          </h2>
+
+          <p>
+            If you have a concern about your transaction,
+            feel free to contact me through any of the
+            platforms below.
+          </p>
+
+        </div>
+
+
+        <div
+          id="supportStatus"
+          class="support-status online"
+        >
+          <span class="status-dot"></span>
+
+          <span id="supportStatusText">
+            AVAILABLE FOR SUPPORT
+          </span>
+        </div>
+
+      </div>
+
+
+      <div class="support-links">
+
+        <a
+          class="support-card"
+          href="https://t.me/D34dFrequency404"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+
+          <span class="support-logo tg">
+            TG
+          </span>
+
+          <span>
+            <strong>
+              Telegram
+            </strong>
+
+            <small>
+              @D34dFrequency404
+            </small>
+          </span>
+
+          <span class="support-arrow">
+            →
+          </span>
+
+        </a>
+
+
+        <a
+          class="support-card"
+          href="https://www.facebook.com/iamuser404/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+
+          <span class="support-logo fb">
+            f
+          </span>
+
+          <span>
+            <strong>
+              Facebook
+            </strong>
+
+            <small>
+              John Wayne
+            </small>
+          </span>
+
+          <span class="support-arrow">
+            →
+          </span>
+
+        </a>
+
+
+        <a
+          class="support-card"
+          href="https://phcorner.org/direct-messages/add?to=John+Wayne"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+
+          <span class="support-logo phc">
+            PHC
+          </span>
+
+          <span>
+            <strong>
+              PHCorner
+            </strong>
+
+            <small>
+              Message John Wayne
+            </small>
+          </span>
+
+          <span class="support-arrow">
+            →
+          </span>
+
+        </a>
+
+      </div>
+
+    </section>
 
   </main>
 
 
-
-  <!-- =========================================================
-       CONTACT SUPPORT
-       ========================================================= -->
-
-  <section class="support-section">
-
-    <div class="container">
-
-      <div class="support-header">
-
-        <span class="support-kicker">
-          NEED HELP?
-        </span>
-
-        <h2>
-          Contact Support
-        </h2>
-
-        <p>
-          If you have questions about a transaction or need assistance,
-          you can contact me through any of the channels below.
-        </p>
-
-      </div>
-
-
-      <div class="support-grid">
-
-
-        <!-- ===================================================
-             TELEGRAM
-             =================================================== -->
-
-        <a
-          class="support-card telegram"
-          href="https://t.me/D34dFrequency404"
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Contact John Wayne on Telegram"
-        >
-
-          <div
-            class="support-icon"
-            aria-hidden="true"
-          >
-            ✈
-          </div>
-
-
-          <div class="support-info">
-
-            <span class="support-platform">
-              Telegram
-            </span>
-
-            <strong>
-              @D34dFrequency404
-            </strong>
-
-            <small>
-              Contact me →
-            </small>
-
-          </div>
-
-        </a>
-
-
-
-        <!-- ===================================================
-             FACEBOOK
-             =================================================== -->
-
-        <a
-          class="support-card facebook"
-          href="https://www.facebook.com/iamuser404/"
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Visit John Wayne on Facebook"
-        >
-
-          <div
-            class="support-icon"
-            aria-hidden="true"
-          >
-            f
-          </div>
-
-
-          <div class="support-info">
-
-            <span class="support-platform">
-              Facebook
-            </span>
-
-            <strong>
-              John Wayne
-            </strong>
-
-            <small>
-              View profile →
-            </small>
-
-          </div>
-
-        </a>
-
-
-
-        <!-- ===================================================
-             PHCORNER
-             =================================================== -->
-
-        <a
-          class="support-card phcorner"
-          href="https://phcorner.org/direct-messages/add?to=John+Wayne"
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Message John Wayne on PHCorner"
-        >
-
-          <div
-            class="support-icon"
-            aria-hidden="true"
-          >
-            P
-          </div>
-
-
-          <div class="support-info">
-
-            <span class="support-platform">
-              PHCorner
-            </span>
-
-            <strong>
-              John Wayne
-            </strong>
-
-            <small>
-              Send me a message →
-            </small>
-
-          </div>
-
-        </a>
-
-      </div>
-
-    </div>
-
-  </section>
-
-
-
-  <!-- =========================================================
+  <!-- ========================================================
        LIGHTBOX
-       ========================================================= -->
+  ========================================================= -->
 
   <div
     id="lightbox"
@@ -409,11 +517,52 @@
     </button>
 
 
-    <img
-      id="lightboxImage"
-      src=""
-      alt="Buyer feedback"
-    >
+    <div class="lightbox-content">
+
+      <div
+        id="imageCounter"
+        class="image-counter"
+      >
+        1 / 1
+      </div>
+
+
+      <img
+        id="lightboxImage"
+        src=""
+        alt="Buyer feedback"
+      />
+
+
+      <div class="zoom-controls">
+
+        <button
+          id="zoomOut"
+          type="button"
+          aria-label="Zoom out"
+        >
+          −
+        </button>
+
+        <button
+          id="zoomReset"
+          type="button"
+          aria-label="Reset zoom"
+        >
+          Reset
+        </button>
+
+        <button
+          id="zoomIn"
+          type="button"
+          aria-label="Zoom in"
+        >
+          +
+        </button>
+
+      </div>
+
+    </div>
 
 
     <button
@@ -427,10 +576,9 @@
   </div>
 
 
-
-  <!-- =========================================================
+  <!-- ========================================================
        FOOTER
-       ========================================================= -->
+  ========================================================= -->
 
   <footer>
 
@@ -448,7 +596,6 @@
 
       </div>
 
-
       <p>
         Thank you for your support
         <span aria-hidden="true">
@@ -460,11 +607,6 @@
 
   </footer>
 
-
-
-  <!-- =========================================================
-       JAVASCRIPT
-       ========================================================= -->
 
   <script src="script.js"></script>
 
