@@ -1,26 +1,36 @@
 from pathlib import Path
-from PIL import Image, ImageOps
+from PIL import Image, ImageOps, ImageFilter
 import pytesseract
 import json
 import re
+
 
 ROOT = Path(".")
 VALID_EXT = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp"}
 
 
-def clean_line(text):
-    return re.sub(r"\s+", " ", text).strip()
+def clean_text(text):
+    text = re.sub(r"\s+", " ", text).strip()
+
+    # Remove common OCR junk at the beginning/end.
+    text = re.sub(
+        r"^[^A-Za-z0-9@._-]+",
+        "",
+        text
+    )
+
+    text = re.sub(
+        r"[^A-Za-z0-9@._-]+$",
+        "",
+        text
+    )
+
+    return text.strip()
 
 
-def find_username(image):
-    width, height = image.size
-
-    # Forum screenshots usually show the username
-    # in the left/profile area.
-    crops = [
-        image.crop((0, 0, int(width * 0.30), int(height * 0.80))),
-        image
-    ]
+def looks_like_username(text):
+    if not text:
+        return False
 
     banned = {
         "PH",
@@ -37,79 +47,207 @@ def find_username(image):
         "Reply",
         "Report",
         "Share",
-        "Quote"
+        "Quote",
+        "Thanks",
+        "Thank",
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat",
+        "Sun"
     }
+
+    if text in banned:
+        return False
+
+    if len(text) < 3 or len(text) > 30:
+        return False
+
+    if len(text.split()) > 4:
+        return False
+
+    # Don't accept obvious sentence fragments.
+    if re.search(r"[.!?,:;]", text):
+        return False
+
+    # Must contain at least one letter.
+    if not any(c.isalpha() for c in text):
+        return False
+
+    return True
+
+
+def preprocess(image):
+    gray = ImageOps.grayscale(image)
+
+    # Upscale the username.
+    gray = gray.resize(
+        (
+            gray.width * 4,
+            gray.height * 4
+        )
+    )
+
+    # Improve small text.
+    gray = ImageOps.autocontrast(gray)
+
+    return gray
+
+
+def find_username(image):
+
+    width, height = image.size
+
+    # IMPORTANT:
+    # The forum screenshot places the username
+    # in the left profile/sidebar area.
+    #
+    # We test several slightly different crops because
+    # screenshots can have different heights.
+
+    crops = [
+        image.crop((
+            0,
+            int(height * 0.20),
+            int(width * 0.22),
+            int(height * 0.70)
+        )),
+
+        image.crop((
+            0,
+            int(height * 0.25),
+            int(width * 0.20),
+            int(height * 0.60)
+        )),
+
+        image.crop((
+            0,
+            int(height * 0.15),
+            int(width * 0.25),
+            int(height * 0.75)
+        ))
+    ]
 
     candidates = []
 
-    for crop in crops:
-        gray = ImageOps.grayscale(crop)
+    for crop_number, crop in enumerate(crops):
 
-        # Make small forum usernames easier for OCR.
-        gray = gray.resize(
-            (gray.width * 2, gray.height * 2)
-        )
+        processed = preprocess(crop)
 
-        text = pytesseract.image_to_string(
-            gray,
-            config="--psm 11"
-        )
+        # Try several Tesseract layouts.
+        for psm in (6, 11, 12):
 
-        for raw_line in text.splitlines():
-
-            line = clean_line(raw_line)
-
-            if not line:
-                continue
-
-            if line in banned:
-                continue
-
-            if len(line) > 35:
-                continue
-
-            # Remove OCR junk around the name.
-            line = re.sub(
-                r"^[^A-Za-z0-9@._-]+|[^A-Za-z0-9@._-]+$",
-                "",
-                line
+            text = pytesseract.image_to_string(
+                processed,
+                config=f"--psm {psm}"
             )
 
-            if not line:
-                continue
+            raw_lines = [
+                clean_text(x)
+                for x in text.splitlines()
+            ]
 
-            words = line.split()
+            lines = [
+                x for x in raw_lines
+                if looks_like_username(x)
+            ]
 
-            if len(words) > 4:
-                continue
+            # -------------------------------------------------
+            # Single-line candidates
+            # -------------------------------------------------
 
-            if not any(char.isalpha() for char in line):
-                continue
+            for line in lines:
 
-            score = 0
+                score = 0
 
-            if len(words) <= 3:
-                score += 3
+                # Prefer names with 1-3 words.
+                words = line.split()
 
-            if 2 <= len(line) <= 24:
-                score += 2
+                if len(words) <= 3:
+                    score += 4
 
-            if not re.search(r"[.!?,:;]", line):
-                score += 1
+                # Username-sized text.
+                if 3 <= len(line) <= 24:
+                    score += 3
 
-            candidates.append((score, line))
+                # Prefer alphabetic names.
+                if sum(c.isalpha() for c in line) >= 4:
+                    score += 2
 
-    if not candidates:
+                # First/second crop is usually the best area.
+                if crop_number == 0:
+                    score += 3
+
+                candidates.append(
+                    (score, line)
+                )
+
+            # -------------------------------------------------
+            # Combine adjacent lines.
+            #
+            # Example:
+            #
+            # Genesis
+            # Storm
+            #
+            # becomes:
+            #
+            # Genesis Storm
+            # -------------------------------------------------
+
+            for i in range(len(lines) - 1):
+
+                combined = (
+                    lines[i]
+                    + " "
+                    + lines[i + 1]
+                )
+
+                combined = clean_text(combined)
+
+                if not looks_like_username(combined):
+                    continue
+
+                score = 12
+
+                if crop_number == 0:
+                    score += 4
+
+                candidates.append(
+                    (score, combined)
+                )
+
+    # ---------------------------------------------------------
+    # Remove duplicates and prefer the strongest candidate.
+    # ---------------------------------------------------------
+
+    unique = {}
+
+    for score, name in candidates:
+
+        key = name.lower()
+
+        if key not in unique:
+            unique[key] = (score, name)
+        else:
+            if score > unique[key][0]:
+                unique[key] = (score, name)
+
+    if not unique:
         return "Buyer"
 
-    candidates.sort(
-        key=lambda item: (-item[0], len(item[1]))
+    ranked = sorted(
+        unique.values(),
+        key=lambda x: (-x[0], len(x[1]))
     )
 
-    return candidates[0][1]
+    return ranked[0][1]
 
 
 entries = []
+
 
 for section in ("feedback", "resolved"):
 
@@ -118,7 +256,14 @@ for section in ("feedback", "resolved"):
     if not root.exists():
         continue
 
-    # Each folder inside feedback/resolved is the product.
+    # Product is determined by the folder name.
+    #
+    # feedback/esim
+    # feedback/iwanttfc
+    #
+    # resolved/esim
+    # resolved/iwanttfc
+
     for product_folder in sorted(root.iterdir()):
 
         if not product_folder.is_dir():
@@ -135,7 +280,6 @@ for section in ("feedback", "resolved"):
         else:
             product = "Other"
 
-        # Process every image in the product folder.
         for image_path in sorted(product_folder.iterdir()):
 
             if image_path.suffix.lower() not in VALID_EXT:
@@ -148,6 +292,10 @@ for section in ("feedback", "resolved"):
                     image = image.convert("RGB")
 
                     buyer = find_username(image)
+
+                    print(
+                        f"OCR: {image_path} -> {buyer}"
+                    )
 
             except Exception as error:
 
@@ -173,6 +321,7 @@ Path("feedback-index.json").write_text(
     ),
     encoding="utf-8"
 )
+
 
 print(
     f"Indexed {len(entries)} feedback images."
