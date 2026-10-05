@@ -1,726 +1,94 @@
 from pathlib import Path
-from PIL import Image, ImageOps, ImageFilter
+from PIL import Image, ImageOps
 import pytesseract
 import json
 import re
 
-
-# ============================================================
-# CONFIGURATION
-# ============================================================
-
 ROOT = Path(".")
+VALID_EXT = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp"}
 
-VALID_EXT = {
-    ".png",
-    ".jpg",
-    ".jpeg",
-    ".webp",
-    ".bmp"
-}
-
-
-# ============================================================
-# TEXT CLEANING
-# ============================================================
-
-def clean_text(text):
-
-    text = re.sub(
-        r"\s+",
-        " ",
-        text
-    ).strip()
-
-    text = re.sub(
-        r"^[^A-Za-z0-9@._-]+",
-        "",
-        text
-    )
-
-    text = re.sub(
-        r"[^A-Za-z0-9@._-]+$",
-        "",
-        text
-    )
-
-    return text.strip()
-
-
-# ============================================================
-# VALID USERNAME WORD
-# ============================================================
-
-def valid_word(word):
-
-    word = clean_text(word)
-
-    if not word:
-        return False
-
-    if len(word) < 3:
-        return False
-
-    if len(word) > 24:
-        return False
-
-    if not any(
-        char.isalpha()
-        for char in word
-    ):
-        return False
-
-    banned = {
-        "PH",
-        "Elite",
-        "VIP",
-        "Member",
-        "Staff",
-        "Moderator",
-        "Admin",
-        "Online",
-        "Offline",
-        "You",
-        "Love",
-        "Reply",
-        "Report",
-        "Share",
-        "Quote",
-        "Thanks",
-        "Thank",
-        "Mon",
-        "Tue",
-        "Wed",
-        "Thu",
-        "Fri",
-        "Sat",
-        "Sun"
-    }
-
-    if word.lower() in {
-        item.lower()
-        for item in banned
-    }:
-        return False
-
-    return True
-
-
-# ============================================================
-# USERNAME VALIDATION
-# ============================================================
-
-def looks_like_username(text):
-
-    if not text:
-        return False
-
-    text = clean_text(text)
-
-    if len(text) < 3:
-        return False
-
-    if len(text) > 30:
-        return False
-
-    if len(text.split()) > 3:
-        return False
-
-    if not any(
-        char.isalpha()
-        for char in text
-    ):
-        return False
-
-    if re.search(
-        r"[.!?,:;]",
-        text
-    ):
-        return False
-
-    banned = {
-        "PH",
-        "Elite",
-        "VIP",
-        "Member",
-        "Staff",
-        "Moderator",
-        "Admin",
-        "Online",
-        "Offline",
-        "You",
-        "Love",
-        "Reply",
-        "Report",
-        "Share",
-        "Quote",
-        "Thanks",
-        "Thank"
-    }
-
-    if text.lower() in {
-        item.lower()
-        for item in banned
-    }:
-        return False
-
-    return True
-
-
-# ============================================================
-# USERNAME DETECTION
-# ============================================================
+def clean_line(s):
+    s = re.sub(r"\s+", " ", s).strip()
+    return s
 
 def find_username(image):
+    # Most forum screenshots put the username/avatar in the left profile area.
+    # OCR that area first, then fall back to the full image.
+    w, h = image.size
+    crops = [
+        image.crop((0, 0, int(w * 0.30), int(h * 0.80))),
+        image
+    ]
 
-    width, height = image.size
-
-    # --------------------------------------------------------
-    # Username area.
-    # --------------------------------------------------------
-
-    left = int(width * 0.045)
-    top = int(height * 0.27)
-    right = int(width * 0.17)
-    bottom = int(height * 0.62)
-
-    crop = image.crop(
-        (
-            left,
-            top,
-            right,
-            bottom
-        )
-    )
-
-    # --------------------------------------------------------
-    # Enlarge.
-    # --------------------------------------------------------
-
-    crop = crop.resize(
-        (
-            crop.width * 8,
-            crop.height * 8
-        ),
-        Image.Resampling.LANCZOS
-    )
-
-    # --------------------------------------------------------
-    # Grayscale.
-    # --------------------------------------------------------
-
-    gray = ImageOps.grayscale(
-        crop
-    )
-
-    gray = ImageOps.autocontrast(
-        gray
-    )
-
-    gray = gray.filter(
-        ImageFilter.SHARPEN
-    )
-
-    # ========================================================
-    # OCR
-    # ========================================================
-
-    all_words = []
-
-    for psm in (
-        6,
-        11,
-        12
-    ):
-
-        data = pytesseract.image_to_data(
-            gray,
-            config=f"--psm {psm}",
-            output_type=pytesseract.Output.DICT
-        )
-
-        for i in range(
-            len(data["text"])
-        ):
-
-            raw = data["text"][i]
-
-            text = clean_text(
-                raw
-            )
-
-            if not text:
-                continue
-
-            try:
-
-                confidence = float(
-                    data["conf"][i]
-                )
-
-            except Exception:
-
-                confidence = 0
-
-            if confidence < 15:
-                continue
-
-            if not valid_word(
-                text
-            ):
-                continue
-
-            x = int(
-                data["left"][i]
-            )
-
-            y = int(
-                data["top"][i]
-            )
-
-            w = int(
-                data["width"][i]
-            )
-
-            h = int(
-                data["height"][i]
-            )
-
-            all_words.append(
-                {
-                    "text": text,
-                    "x": x,
-                    "y": y,
-                    "w": w,
-                    "h": h,
-                    "conf": confidence
-                }
-            )
-
-    # ========================================================
-    # REMOVE DUPLICATES
-    # ========================================================
-
-    unique_words = []
-
-    for word in all_words:
-
-        duplicate = False
-
-        for existing in unique_words:
-
-            same_text = (
-                word["text"].lower()
-                ==
-                existing["text"].lower()
-            )
-
-            close_x = (
-                abs(
-                    word["x"]
-                    -
-                    existing["x"]
-                )
-                < 80
-            )
-
-            close_y = (
-                abs(
-                    word["y"]
-                    -
-                    existing["y"]
-                )
-                < 100
-            )
-
-            if (
-                same_text
-                and close_x
-                and close_y
-            ):
-
-                duplicate = True
-
-                if (
-                    word["conf"]
-                    >
-                    existing["conf"]
-                ):
-
-                    existing.update(
-                        word
-                    )
-
-                break
-
-        if not duplicate:
-
-            unique_words.append(
-                word
-            )
-
-    # ========================================================
-    # SORT BY POSITION
-    # ========================================================
-
-    unique_words.sort(
-        key=lambda item: (
-            item["y"],
-            item["x"]
-        )
-    )
-
-    # ========================================================
-    # TWO-LINE USERNAME
-    #
-    # Genesis
-    # Storm
-    #
-    # -> Genesis Storm
-    # ========================================================
+    banned = {
+        "PH", "Elite", "VIP", "Member", "Staff", "Moderator",
+        "Admin", "Online", "Offline", "You", "Love", "Reply",
+        "Report", "Share", "Quote"
+    }
 
     candidates = []
-
-    for i, first in enumerate(
-        unique_words
-    ):
-
-        for second in unique_words[
-            i + 1:
-        ]:
-
-            if (
-                second["y"]
-                <=
-                first["y"]
-            ):
+    for crop in crops:
+        gray = ImageOps.grayscale(crop)
+        # Upscale the small profile/sidebar text.
+        scale = 2
+        gray = gray.resize((gray.width * scale, gray.height * scale))
+        txt = pytesseract.image_to_string(gray, config="--psm 11")
+        for raw in txt.splitlines():
+            line = clean_line(raw)
+            if not line or line in banned:
                 continue
-
-            vertical_distance = (
-                second["y"]
-                -
-                first["y"]
-            )
-
-            # IMPORTANT:
-            # Image is enlarged 8x.
-            # Allow a much larger line gap.
-            if vertical_distance > 500:
+            if len(line) > 35:
                 continue
-
-            horizontal_distance = abs(
-                second["x"]
-                -
-                first["x"]
-            )
-
-            if horizontal_distance > 500:
+            # Remove common OCR junk/punctuation while keeping forum-name characters.
+            line = re.sub(r"^[^A-Za-z0-9@._-]+|[^A-Za-z0-9@._-]+$", "", line)
+            if not line:
                 continue
-
-            combined = (
-                first["text"]
-                + " "
-                + second["text"]
-            )
-
-            combined = clean_text(
-                combined
-            )
-
-            if not looks_like_username(
-                combined
-            ):
+            words = line.split()
+            if len(words) > 4:
                 continue
+            # Prefer lines that look like a username/name rather than sentence text.
+            if any(c.isalpha() for c in line):
+                score = 0
+                if len(words) <= 3: score += 3
+                if 2 <= len(line) <= 24: score += 2
+                if not re.search(r"[.!?,:;]", line): score += 1
+                candidates.append((score, line))
 
-            score = 100
+    if not candidates:
+        return "Buyer"
 
-            score += (
-                first["conf"]
-                +
-                second["conf"]
-            ) / 10
-
-            # Prefer closer lines.
-            score -= (
-                vertical_distance
-                /
-                20
-            )
-
-            # Prefer aligned words.
-            score -= (
-                horizontal_distance
-                /
-                30
-            )
-
-            candidates.append(
-                (
-                    score,
-                    combined
-                )
-            )
-
-    # ========================================================
-    # BEST TWO-WORD RESULT
-    # ========================================================
-
-    if candidates:
-
-        candidates.sort(
-            key=lambda item: item[0],
-            reverse=True
-        )
-
-        return candidates[0][1]
-
-    # ========================================================
-    # NORMAL OCR FALLBACK
-    # ========================================================
-
-    text = pytesseract.image_to_string(
-        gray,
-        config="--psm 6"
-    )
-
-    lines = []
-
-    for raw_line in text.splitlines():
-
-        line = clean_text(
-            raw_line
-        )
-
-        if not line:
-            continue
-
-        if looks_like_username(
-            line
-        ):
-
-            lines.append(
-                line
-            )
-
-    # --------------------------------------------------------
-    # If OCR returns two separate lines,
-    # manually combine them.
-    # --------------------------------------------------------
-
-    if len(lines) >= 2:
-
-        for i in range(
-            len(lines) - 1
-        ):
-
-            combined = clean_text(
-                lines[i]
-                + " "
-                + lines[i + 1]
-            )
-
-            if looks_like_username(
-                combined
-            ):
-
-                return combined
-
-    # --------------------------------------------------------
-    # Two-word line.
-    # --------------------------------------------------------
-
-    for line in lines:
-
-        if len(
-            line.split()
-        ) == 2:
-
-            return line
-
-    # --------------------------------------------------------
-    # One-word fallback.
-    # --------------------------------------------------------
-
-    if lines:
-
-        return lines[0]
-
-    return "Buyer"
-
-
-# ============================================================
-# PRODUCT NAME
-# ============================================================
-
-def format_product_name(
-    folder_name
-):
-
-    product = folder_name
-
-    product = product.replace(
-        "-",
-        " "
-    )
-
-    product = product.replace(
-        "_",
-        " "
-    )
-
-    product = product.strip()
-
-    if not product:
-
-        return "Other"
-
-    return product.title()
-
-
-# ============================================================
-# BUILD INDEX
-# ============================================================
+    candidates.sort(key=lambda x: (-x[0], len(x[1])))
+    return candidates[0][1]
 
 entries = []
-
-
-for section in (
-    "feedback",
-    "resolved"
-):
-
-    root = (
-        ROOT
-        /
-        "images"
-        /
-        section
-    )
-
+for root_name in ("feedback", "resolved"):
+    root = ROOT / "images" / root_name
     if not root.exists():
-
-        print(
-            f"Skipping missing folder: {root}"
-        )
-
         continue
 
-    for product_folder in sorted(
-        root.iterdir()
-    ):
+    for product_dir in sorted(p for p in root.iterdir() if p.is_dir()):
+        product = product_dir.name.replace("-", " ").replace("_", " ").strip()
+        product = product.title() if product else "Other"
 
-        if not product_folder.is_dir():
-            continue
-
-        product = format_product_name(
-            product_folder.name
-        )
-
-        for image_path in sorted(
-            product_folder.iterdir()
-        ):
-
-            if (
-                image_path.suffix.lower()
-                not in VALID_EXT
-            ):
+        for img_path in sorted(product_dir.iterdir()):
+            if img_path.suffix.lower() not in VALID_EXT:
                 continue
-
-            print("")
-            print(
-                "========================================"
-            )
-
-            print(
-                f"Processing: {image_path}"
-            )
-
-            print(
-                f"Product: {product}"
-            )
-
-            print(
-                f"Type: {section}"
-            )
-
             try:
-
-                with Image.open(
-                    image_path
-                ) as image:
-
-                    image = image.convert(
-                        "RGB"
-                    )
-
-                    buyer = find_username(
-                        image
-                    )
-
-                    print(
-                        f"Detected buyer: {buyer}"
-                    )
-
-            except Exception as error:
-
-                print(
-                    f"OCR failed for "
-                    f"{image_path}: {error}"
-                )
-
+                with Image.open(img_path) as im:
+                    buyer = find_username(im.convert("RGB"))
+            except Exception as exc:
+                print(f"OCR failed for {img_path}: {exc}")
                 buyer = "Buyer"
 
-            entries.append(
-                {
-                    "buyer": buyer,
-                    "item": product,
-                    "type": section,
-                    "image": image_path.as_posix()
-                }
-            )
+            entries.append({
+                "buyer": buyer,
+                "item": product,
+                "type": root_name,
+                "image": img_path.as_posix()
+            })
 
-
-# ============================================================
-# WRITE JSON
-# ============================================================
-
-output_file = (
-    ROOT
-    /
-    "feedback-index.json"
-)
-
-output_file.write_text(
-    json.dumps(
-        entries,
-        ensure_ascii=False,
-        indent=2
-    ),
+Path("feedback-index.json").write_text(
+    json.dumps(entries, ensure_ascii=False, indent=2),
     encoding="utf-8"
 )
-
-
-# ============================================================
-# DONE
-# ============================================================
-
-print("")
-print(
-    "========================================"
-)
-
-print(
-    "FEEDBACK INDEX COMPLETE"
-)
-
-print(
-    "========================================"
-)
-
-print(
-    f"Total images indexed: {len(entries)}"
-)
-
-print(
-    f"Output: {output_file}"
-)
+print(f"Indexed {len(entries)} images")
