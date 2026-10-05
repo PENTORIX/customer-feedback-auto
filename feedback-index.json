@@ -1,8 +1,32 @@
 [
   {
-    "buyer": "Genesis Storm",
-    "item": "eSIM",
+    "buyer": "on",
+    "item": "Crayoai",
+    "type": "feedback",
+    "image": "images/feedback/crayoai/genesis-storm-sample.png"
+  },
+  {
+    "buyer": "on",
+    "item": "Esim",
     "type": "feedback",
     "image": "images/feedback/esim/genesis-storm-sample.png"
+  },
+  {
+    "buyer": "on",
+    "item": "Iwanttfc",
+    "type": "feedback",
+    "image": "images/feedback/iwanttfc/genesis-storm-sample.png"
+  },
+  {
+    "buyer": "on",
+    "item": "Spotify",
+    "type": "feedback",
+    "image": "images/feedback/spotify/genesis-storm-sample.png"
+  },
+  {
+    "buyer": "on",
+    "item": "Iwanttfc",
+    "type": "resolved",
+    "image": "images/resolved/iwanttfc/genesis-storm-sample.png"
   }
 ]
