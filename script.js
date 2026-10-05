@@ -1,46 +1,38 @@
+/* ============================================================
+   STATE
+   ============================================================ */
+
 const state = {
-
   section: "feedback",
-
   feedbackFilter: "All",
-
   resolvedFilter: "All",
 
   items: [],
 
   currentImages: [],
-
   currentIndex: 0,
 
   zoom: 1
-
 };
 
 
-/*
- * ============================================================
- * SUPPORT STATUS
- * ============================================================
- *
- * Change online to false whenever you want to show OFFLINE.
- */
+/* ============================================================
+   SUPPORT STATUS
+
+   true  = AVAILABLE FOR SUPPORT
+   false = CURRENTLY OFFLINE
+   ============================================================ */
 
 const SUPPORT_STATUS = {
-
   online: true,
-
   onlineText: "AVAILABLE FOR SUPPORT",
-
   offlineText: "CURRENTLY OFFLINE"
-
 };
 
 
-/*
- * ============================================================
- * DOM
- * ============================================================
- */
+/* ============================================================
+   DOM ELEMENTS
+   ============================================================ */
 
 const feedbackGrid =
   document.getElementById("feedbackGrid");
@@ -63,6 +55,9 @@ const feedbackSection =
 const resolvedSection =
   document.getElementById("resolvedSection");
 
+
+/* Statistics */
+
 const totalTransactions =
   document.getElementById("totalTransactions");
 
@@ -72,11 +67,17 @@ const totalResolved =
 const totalPlatforms =
   document.getElementById("totalPlatforms");
 
+
+/* Support */
+
 const supportStatus =
   document.getElementById("supportStatus");
 
 const supportStatusText =
   document.getElementById("supportStatusText");
+
+
+/* Lightbox */
 
 const lightbox =
   document.getElementById("lightbox");
@@ -87,30 +88,28 @@ const lightboxImage =
 const imageCounter =
   document.getElementById("imageCounter");
 
-const closeLightbox =
+const closeLightboxButton =
   document.getElementById("closeLightbox");
 
-const prevImage =
+const prevImageButton =
   document.getElementById("prevImage");
 
-const nextImage =
+const nextImageButton =
   document.getElementById("nextImage");
 
-const zoomIn =
+const zoomInButton =
   document.getElementById("zoomIn");
 
-const zoomOut =
+const zoomOutButton =
   document.getElementById("zoomOut");
 
-const zoomReset =
+const zoomResetButton =
   document.getElementById("zoomReset");
 
 
-/*
- * ============================================================
- * PLATFORM INFORMATION
- * ============================================================
- */
+/* ============================================================
+   PLATFORM INFORMATION
+   ============================================================ */
 
 const PLATFORM_INFO = {
 
@@ -141,11 +140,9 @@ const PLATFORM_INFO = {
 };
 
 
-/*
- * ============================================================
- * NORMALIZE PLATFORM
- * ============================================================
- */
+/* ============================================================
+   NORMALIZE PLATFORM KEY
+   ============================================================ */
 
 function platformKey(value) {
 
@@ -156,53 +153,53 @@ function platformKey(value) {
 }
 
 
+/* ============================================================
+   GET PLATFORM INFO
+   ============================================================ */
+
 function platformInfo(value) {
 
   const key =
     platformKey(value);
 
-  return (
-    PLATFORM_INFO[key] || {
+  return PLATFORM_INFO[key] || {
 
-      name:
-        String(value || "Other"),
+    name:
+      String(value || "Other"),
 
-      logo: "",
+    logo: "",
 
-      fallback:
-        String(value || "?")
-          .slice(0, 1)
-          .toUpperCase()
+    fallback:
+      String(value || "?")
+        .slice(0, 1)
+        .toUpperCase()
 
-    }
-  );
+  };
 
 }
 
 
-/*
- * ============================================================
- * PLATFORM LOGO
- * ============================================================
- */
+/* ============================================================
+   PLATFORM LOGO HTML
+   ============================================================ */
 
 function platformLogoHtml(
   value,
   small = false
 ) {
 
-  const p =
+  const platform =
     platformInfo(value);
 
 
-  if (!p.logo) {
+  if (!platform.logo) {
 
     return `
       <span
         class="platform-fallback"
         aria-hidden="true"
       >
-        ${escapeHtml(p.fallback)}
+        ${escapeHtml(platform.fallback)}
       </span>
     `;
 
@@ -211,12 +208,8 @@ function platformLogoHtml(
 
   return `
     <img
-      class="${
-        small
-          ? "filter-logo"
-          : "platform-logo"
-      }"
-      src="${escapeHtml(p.logo)}"
+      class="${small ? "filter-logo" : "platform-logo"}"
+      src="${escapeHtml(platform.logo)}"
       alt=""
       loading="lazy"
       onerror="
@@ -230,41 +223,52 @@ function platformLogoHtml(
       aria-hidden="true"
       style="display:none"
     >
-      ${escapeHtml(p.fallback)}
+      ${escapeHtml(platform.fallback)}
     </span>
   `;
 
 }
 
 
-/*
- * ============================================================
- * LOAD DATA
- * ============================================================
- */
+/* ============================================================
+   LOAD feedback-index.json
+   ============================================================ */
 
 async function loadData() {
 
   try {
 
-    const res =
+    const response =
       await fetch(
         "feedback-index.json?ts=" +
         Date.now()
       );
 
 
-    if (!res.ok) {
+    if (!response.ok) {
 
       throw new Error(
-        "Could not load feedback index"
+        "Could not load feedback-index.json"
+      );
+
+    }
+
+
+    const data =
+      await response.json();
+
+
+    if (!Array.isArray(data)) {
+
+      throw new Error(
+        "feedback-index.json is not an array"
       );
 
     }
 
 
     state.items =
-      await res.json();
+      data;
 
 
     applyUrlState();
@@ -275,38 +279,61 @@ async function loadData() {
 
     render();
 
+
+    console.log(
+      `Loaded ${state.items.length} feedback entries.`
+    );
+
   }
 
   catch (error) {
 
-    feedbackGrid.innerHTML =
-      `
+    console.error(
+      "Feedback loading error:",
+      error
+    );
+
+
+    if (feedbackGrid) {
+
+      feedbackGrid.innerHTML = `
         <div class="empty">
           Feedback is temporarily unavailable.
         </div>
       `;
 
+    }
 
-    resolvedGrid.innerHTML =
-      `
+
+    if (resolvedGrid) {
+
+      resolvedGrid.innerHTML = `
         <div class="empty">
           Resolved issues are temporarily unavailable.
         </div>
       `;
 
+    }
 
-    console.error(error);
+
+    if (latestGrid) {
+
+      latestGrid.innerHTML = `
+        <div class="empty">
+          Recent transactions are temporarily unavailable.
+        </div>
+      `;
+
+    }
 
   }
 
 }
 
 
-/*
- * ============================================================
- * SECTION DATA
- * ============================================================
- */
+/* ============================================================
+   GET ITEMS BY SECTION
+   ============================================================ */
 
 function getItems(section) {
 
@@ -318,18 +345,14 @@ function getItems(section) {
 }
 
 
-/*
- * ============================================================
- * FILTER
- * ============================================================
- */
+/* ============================================================
+   FILTER STATE
+   ============================================================ */
 
 function getFilter(section) {
 
   return section === "feedback"
-
     ? state.feedbackFilter
-
     : state.resolvedFilter;
 
 }
@@ -341,9 +364,7 @@ function setFilter(
   updateUrl = true
 ) {
 
-  if (
-    section === "feedback"
-  ) {
+  if (section === "feedback") {
 
     state.feedbackFilter =
       value;
@@ -358,6 +379,15 @@ function setFilter(
   }
 
 
+  /*
+   * Switch to the section whose filter
+   * was clicked.
+   */
+
+  state.section =
+    section;
+
+
   if (updateUrl) {
 
     updatePlatformUrl();
@@ -370,11 +400,9 @@ function setFilter(
 }
 
 
-/*
- * ============================================================
- * PLATFORM LIST
- * ============================================================
- */
+/* ============================================================
+   PRODUCT / PLATFORM LIST
+   ============================================================ */
 
 function products(items) {
 
@@ -400,16 +428,19 @@ function products(items) {
 }
 
 
-/*
- * ============================================================
- * FILTER BUTTONS
- * ============================================================
- */
+/* ============================================================
+   RENDER FILTER BUTTONS
+   ============================================================ */
 
 function renderFilters(
   section,
   container
 ) {
+
+  if (!container) {
+    return;
+  }
+
 
   container.innerHTML = "";
 
@@ -424,45 +455,47 @@ function renderFilters(
       );
 
 
+    button.type =
+      "button";
+
+
     button.className =
       "filter" +
 
       (
-        getFilter(section) ===
-        product
-
+        getFilter(section) === product
           ? " active"
-
           : ""
       );
 
 
-    const label =
-      product === "All"
+    if (product === "All") {
 
-        ? "All"
+      button.textContent =
+        "All";
 
-        : platformInfo(
-            product
-          ).name;
+    }
+
+    else {
+
+      const platform =
+        platformInfo(product);
 
 
-    button.innerHTML =
+      button.innerHTML = `
+        ${platformLogoHtml(
+          product,
+          true
+        )}
 
-      product === "All"
-
-        ? "All"
-
-        : `
-          ${platformLogoHtml(
-            product,
-            true
+        <span>
+          ${escapeHtml(
+            platform.name
           )}
+        </span>
+      `;
 
-          <span>
-            ${escapeHtml(label)}
-          </span>
-        `;
+    }
 
 
     button.addEventListener(
@@ -487,15 +520,11 @@ function renderFilters(
 }
 
 
-/*
- * ============================================================
- * FILTERED ITEMS
- * ============================================================
- */
+/* ============================================================
+   GET FILTERED ITEMS
+   ============================================================ */
 
-function getFilteredItems(
-  section
-) {
+function getFilteredItems(section) {
 
   const filter =
     getFilter(section);
@@ -511,16 +540,19 @@ function getFilteredItems(
 }
 
 
-/*
- * ============================================================
- * RENDER CARDS
- * ============================================================
- */
+/* ============================================================
+   RENDER MAIN FEEDBACK CARDS
+   ============================================================ */
 
 function renderCards(
   section,
   container
 ) {
+
+  if (!container) {
+    return;
+  }
+
 
   const items =
     getFilteredItems(section);
@@ -528,12 +560,11 @@ function renderCards(
 
   if (!items.length) {
 
-    container.innerHTML =
-      `
-        <div class="empty">
-          No entries yet.
-        </div>
-      `;
+    container.innerHTML = `
+      <div class="empty">
+        No entries yet.
+      </div>
+    `;
 
     return;
 
@@ -541,115 +572,125 @@ function renderCards(
 
 
   container.innerHTML =
-    items.map(
-      item => {
+    items.map(item => {
 
-        const platform =
-          platformInfo(
-            item.item
-          );
-
-
-        const isResolved =
-          section === "resolved";
+      const platform =
+        platformInfo(
+          item.item
+        );
 
 
-        return `
+      const isResolved =
+        section === "resolved";
 
-          <article class="card">
 
-            <div class="card-info">
+      return `
 
-              <div class="meta">
+        <article class="card">
 
-                <span class="buyer">
+          <div class="card-info">
 
-                  <span
-                    class="buyer-icon"
-                    aria-hidden="true"
-                  >
-                    ●
-                  </span>
+            <div class="meta">
 
-                  <strong>
-                    ${escapeHtml(
-                      item.buyer ||
-                      "Buyer"
-                    )}
-                  </strong>
 
+              <!-- BUYER -->
+
+              <span class="buyer">
+
+                <span
+                  class="buyer-icon"
+                  aria-hidden="true"
+                >
+                  ●
                 </span>
 
-
-                <span class="platform">
-
-                  ${platformLogoHtml(
-                    item.item
+                <strong>
+                  ${escapeHtml(
+                    item.buyer ||
+                    "PHC Legit Transaction"
                   )}
+                </strong>
 
-                  <strong>
-                    ${escapeHtml(
-                      platform.name
-                    )}
-                  </strong>
-
-                </span>
-
-              </div>
+              </span>
 
 
-              <span
-                class="
-                  status
-                  ${
-                    isResolved
-                      ? "resolved"
-                      : "positive"
-                  }
-                "
-              >
+              <!-- PLATFORM -->
 
-                ${
-                  isResolved
-                    ? "● Resolved"
-                    : "★ Feedback"
-                }
+              <span class="platform">
+
+                ${platformLogoHtml(
+                  item.item
+                )}
+
+                <strong>
+                  ${escapeHtml(
+                    platform.name
+                  )}
+                </strong>
 
               </span>
 
             </div>
 
 
-            <div class="images">
+            <!-- STATUS -->
 
-              <img
-                class="feedback-image"
-                src="${encodeURI(
-                  item.image
-                )}"
-                alt="${escapeHtml(
-                  platform.name
-                )} customer feedback"
-                loading="lazy"
-              >
+            <span
+              class="status ${
+                isResolved
+                  ? "resolved"
+                  : "positive"
+              }"
+            >
 
-            </div>
+              ${
+                isResolved
+                  ? "● Resolved"
+                  : "★ Feedback"
+              }
 
-          </article>
+            </span>
 
-        `;
+          </div>
 
-      }
-    ).join("");
+
+          <!-- SCREENSHOT -->
+
+          <div class="images">
+
+            <img
+              class="feedback-image"
+              src="${encodeURI(
+                item.image
+              )}"
+              alt="${escapeHtml(
+                platform.name
+              )} customer feedback"
+              loading="lazy"
+            >
+
+          </div>
+
+        </article>
+
+      `;
+
+    }).join("");
 
 
   /*
-   * Click screenshot.
-   *
-   * IMPORTANT:
-   * Gallery contains all currently filtered
-   * screenshots, not just the clicked screenshot.
+   * Create gallery using currently
+   * visible/filtered cards.
    */
+
+  const galleryImages =
+    items
+      .map(
+        item =>
+          item.image
+      )
+      .filter(Boolean);
+
 
   const imageElements =
     container.querySelectorAll(
@@ -658,23 +699,14 @@ function renderCards(
 
 
   imageElements.forEach(
-    (image, index) => {
+    (imageElement, index) => {
 
-      image.addEventListener(
+      imageElement.addEventListener(
         "click",
         () => {
 
-          const images =
-            items
-              .map(
-                item =>
-                  item.image
-              )
-              .filter(Boolean);
-
-
           openLightbox(
-            images,
+            galleryImages,
             index
           );
 
@@ -687,17 +719,9 @@ function renderCards(
 }
 
 
-/*
- * ============================================================
- * LATEST TRANSACTIONS
- * ============================================================
- *
- * Since no visible dates are stored, this uses the last
- * indexed entries from feedback-index.json.
- *
- * It does not display any date.
- * ============================================================
- */
+/* ============================================================
+   LATEST TRANSACTIONS
+   ============================================================ */
 
 function renderLatest() {
 
@@ -705,6 +729,12 @@ function renderLatest() {
     return;
   }
 
+
+  /*
+   * Last indexed feedback images.
+   *
+   * No date is displayed.
+   */
 
   const latest =
     getItems("feedback")
@@ -715,12 +745,11 @@ function renderLatest() {
 
   if (!latest.length) {
 
-    latestGrid.innerHTML =
-      `
-        <div class="empty">
-          No recent transactions yet.
-        </div>
-      `;
+    latestGrid.innerHTML = `
+      <div class="empty">
+        No recent transactions yet.
+      </div>
+    `;
 
     return;
 
@@ -728,63 +757,64 @@ function renderLatest() {
 
 
   latestGrid.innerHTML =
-    latest.map(
-      item => {
+    latest.map(item => {
 
-        const platform =
-          platformInfo(
-            item.item
-          );
+      const platform =
+        platformInfo(
+          item.item
+        );
 
 
-        return `
+      return `
 
-          <article
-            class="latest-card"
-            data-image="${escapeHtml(
+        <article class="latest-card">
+
+          <img
+            src="${encodeURI(
               item.image
             )}"
+            alt="${escapeHtml(
+              platform.name
+            )} transaction"
+            loading="lazy"
           >
 
-            <img
-              src="${encodeURI(
-                item.image
-              )}"
-              alt="${escapeHtml(
+
+          <div class="latest-info">
+
+            <span class="latest-buyer">
+              ${escapeHtml(
+                item.buyer ||
+                "PHC Legit Transaction"
+              )}
+            </span>
+
+
+            <span class="latest-platform">
+              ${escapeHtml(
                 platform.name
-              )} transaction"
-              loading="lazy"
-            >
+              )}
+            </span>
 
+          </div>
 
-            <div class="latest-info">
+        </article>
 
-              <span class="latest-buyer">
-                ${escapeHtml(
-                  item.buyer ||
-                  "Buyer"
-                )}
-              </span>
+      `;
 
-              <span class="latest-platform">
-                ${escapeHtml(
-                  platform.name
-                )}
-              </span>
-
-            </div>
-
-          </article>
-
-        `;
-
-      }
-    ).join("");
+    }).join("");
 
 
   const latestCards =
     latestGrid.querySelectorAll(
       ".latest-card"
+    );
+
+
+  const images =
+    latest.map(
+      item =>
+        item.image
     );
 
 
@@ -794,13 +824,6 @@ function renderLatest() {
       card.addEventListener(
         "click",
         () => {
-
-          const images =
-            latest.map(
-              item =>
-                item.image
-            );
-
 
           openLightbox(
             images,
@@ -816,11 +839,9 @@ function renderLatest() {
 }
 
 
-/*
- * ============================================================
- * STATISTICS
- * ============================================================
- */
+/* ============================================================
+   STATISTICS
+   ============================================================ */
 
 function updateStatistics() {
 
@@ -839,7 +860,9 @@ function updateStatistics() {
 
         .map(
           item =>
-            item.item
+            platformKey(
+              item.item
+            )
         )
 
         .filter(Boolean)
@@ -847,10 +870,18 @@ function updateStatistics() {
     );
 
 
+  /*
+   * TOTAL TRANSACTIONS
+   *
+   * Counts all screenshots/entries including
+   * resolved transactions.
+   */
+
   if (totalTransactions) {
 
     totalTransactions.textContent =
-      feedback.length.toLocaleString();
+      state.items.length
+        .toLocaleString();
 
   }
 
@@ -858,7 +889,8 @@ function updateStatistics() {
   if (totalResolved) {
 
     totalResolved.textContent =
-      resolved.length.toLocaleString();
+      resolved.length
+        .toLocaleString();
 
   }
 
@@ -866,29 +898,31 @@ function updateStatistics() {
   if (totalPlatforms) {
 
     totalPlatforms.textContent =
-      platforms.size.toLocaleString();
+      platforms.size
+        .toLocaleString();
 
   }
 
 }
 
 
-/*
- * ============================================================
- * SUPPORT STATUS
- * ============================================================
- */
+/* ============================================================
+   SUPPORT STATUS
+   ============================================================ */
 
 function updateSupportStatus() {
 
-  if (!supportStatus) {
+  if (
+    !supportStatus ||
+    !supportStatusText
+  ) {
+
     return;
+
   }
 
 
-  if (
-    SUPPORT_STATUS.online
-  ) {
+  if (SUPPORT_STATUS.online) {
 
     supportStatus.classList
       .remove("offline");
@@ -919,22 +953,9 @@ function updateSupportStatus() {
 }
 
 
-/*
- * ============================================================
- * URL FILTERING
- * ============================================================
- *
- * Examples:
- *
- * ?platform=esim
- *
- * ?platform=iwanttfc
- *
- * ?platform=spotify
- *
- * ?platform=esim&section=resolved
- * ============================================================
- */
+/* ============================================================
+   SHAREABLE URL FILTER
+   ============================================================ */
 
 function applyUrlState() {
 
@@ -944,17 +965,21 @@ function applyUrlState() {
     );
 
 
-  const platform =
-    params.get("platform");
-
-
   const section =
     params.get("section");
 
 
+  const platform =
+    params.get("platform");
+
+
+  /*
+   * Section
+   */
+
   if (
-    section === "resolved" ||
-    section === "feedback"
+    section === "feedback" ||
+    section === "resolved"
   ) {
 
     state.section =
@@ -963,23 +988,29 @@ function applyUrlState() {
   }
 
 
+  /*
+   * Platform
+   */
+
   if (platform) {
 
     const normalized =
-      platformKey(
-        platform
-      );
+      platformKey(platform);
 
 
     const allPlatforms =
       [
         ...new Set(
+
           state.items
+
             .map(
               item =>
                 item.item
             )
+
             .filter(Boolean)
+
         )
       ];
 
@@ -1018,11 +1049,9 @@ function applyUrlState() {
 }
 
 
-/*
- * ============================================================
- * UPDATE URL
- * ============================================================
- */
+/* ============================================================
+   UPDATE SHAREABLE URL
+   ============================================================ */
 
 function updatePlatformUrl() {
 
@@ -1037,6 +1066,10 @@ function updatePlatformUrl() {
       state.section
     );
 
+
+  /*
+   * Platform
+   */
 
   if (
     filter &&
@@ -1061,9 +1094,12 @@ function updatePlatformUrl() {
   }
 
 
+  /*
+   * Section
+   */
+
   if (
-    state.section ===
-    "resolved"
+    state.section === "resolved"
   ) {
 
     params.set(
@@ -1105,26 +1141,30 @@ function updatePlatformUrl() {
 }
 
 
-/*
- * ============================================================
- * MAIN RENDER
- * ============================================================
- */
+/* ============================================================
+   MAIN RENDER
+   ============================================================ */
 
 function render() {
 
-  feedbackSection.classList.toggle(
-    "hidden",
-    state.section !==
-    "feedback"
-  );
+  if (feedbackSection) {
+
+    feedbackSection.classList.toggle(
+      "hidden",
+      state.section !== "feedback"
+    );
+
+  }
 
 
-  resolvedSection.classList.toggle(
-    "hidden",
-    state.section !==
-    "resolved"
-  );
+  if (resolvedSection) {
+
+    resolvedSection.classList.toggle(
+      "hidden",
+      state.section !== "resolved"
+    );
+
+  }
 
 
   renderFilters(
@@ -1154,40 +1194,40 @@ function render() {
   renderLatest();
 
 
+  /*
+   * Tab active state.
+   */
+
   document
     .querySelectorAll(".tab")
-    .forEach(
-      button => {
+    .forEach(button => {
 
-        const active =
-          button.dataset.section ===
-          state.section;
-
-
-        button.classList.toggle(
-          "active",
-          active
-        );
+      const active =
+        button.dataset.section ===
+        state.section;
 
 
-        button.setAttribute(
-          "aria-selected",
-          active
-            ? "true"
-            : "false"
-        );
+      button.classList.toggle(
+        "active",
+        active
+      );
 
-      }
-    );
+
+      button.setAttribute(
+        "aria-selected",
+        active
+          ? "true"
+          : "false"
+      );
+
+    });
 
 }
 
 
-/*
- * ============================================================
- * ESCAPE HTML
- * ============================================================
- */
+/* ============================================================
+   ESCAPE HTML
+   ============================================================ */
 
 function escapeHtml(value) {
 
@@ -1221,16 +1261,24 @@ function escapeHtml(value) {
 }
 
 
-/*
- * ============================================================
- * LIGHTBOX
- * ============================================================
- */
+/* ============================================================
+   OPEN LIGHTBOX
+   ============================================================ */
 
 function openLightbox(
   images,
   index = 0
 ) {
+
+  if (
+    !lightbox ||
+    !lightboxImage
+  ) {
+
+    return;
+
+  }
+
 
   if (
     !Array.isArray(images) ||
@@ -1243,7 +1291,16 @@ function openLightbox(
 
 
   state.currentImages =
-    images;
+    images.filter(Boolean);
+
+
+  if (
+    !state.currentImages.length
+  ) {
+
+    return;
+
+  }
 
 
   state.currentIndex =
@@ -1251,12 +1308,13 @@ function openLightbox(
       0,
       Math.min(
         index,
-        images.length - 1
+        state.currentImages.length - 1
       )
     );
 
 
-  state.zoom = 1;
+  state.zoom =
+    1;
 
 
   lightbox.classList
@@ -1277,6 +1335,10 @@ function openLightbox(
 
 }
 
+
+/* ============================================================
+   UPDATE LIGHTBOX
+   ============================================================ */
 
 function updateLightbox() {
 
@@ -1303,33 +1365,58 @@ function updateLightbox() {
     `scale(${state.zoom})`;
 
 
-  imageCounter.textContent =
-    `${state.currentIndex + 1} / ${state.currentImages.length}`;
+  /*
+   * Counter
+   */
+
+  if (imageCounter) {
+
+    imageCounter.textContent =
+      `${state.currentIndex + 1} / ${state.currentImages.length}`;
+
+  }
 
 
   /*
-   * Hide navigation if gallery has only one image.
+   * Hide arrows if one image only.
    */
 
   const multiple =
     state.currentImages.length > 1;
 
 
-  prevImage.style.display =
-    multiple
-      ? ""
-      : "none";
+  if (prevImageButton) {
+
+    prevImageButton.style.display =
+      multiple
+        ? ""
+        : "none";
+
+  }
 
 
-  nextImage.style.display =
-    multiple
-      ? ""
-      : "none";
+  if (nextImageButton) {
+
+    nextImageButton.style.display =
+      multiple
+        ? ""
+        : "none";
+
+  }
 
 }
 
 
-function closeLightbox() {
+/* ============================================================
+   CLOSE LIGHTBOX
+   ============================================================ */
+
+function closeLightboxViewer() {
+
+  if (!lightbox) {
+    return;
+  }
+
 
   lightbox.classList
     .add("hidden");
@@ -1348,20 +1435,28 @@ function closeLightbox() {
   state.currentImages =
     [];
 
+
   state.currentIndex =
     0;
+
 
   state.zoom =
     1;
 
+
+  if (lightboxImage) {
+
+    lightboxImage.style.transform =
+      "scale(1)";
+
+  }
+
 }
 
 
-/*
- * ============================================================
- * NEXT / PREVIOUS
- * ============================================================
- */
+/* ============================================================
+   NEXT IMAGE
+   ============================================================ */
 
 function nextImageAction() {
 
@@ -1389,6 +1484,10 @@ function nextImageAction() {
 
 }
 
+
+/* ============================================================
+   PREVIOUS IMAGE
+   ============================================================ */
 
 function previousImageAction() {
 
@@ -1418,15 +1517,11 @@ function previousImageAction() {
 }
 
 
-/*
- * ============================================================
- * ZOOM
- * ============================================================
- */
+/* ============================================================
+   ZOOM
+   ============================================================ */
 
-function setZoom(
-  value
-) {
+function setZoom(value) {
 
   state.zoom =
     Math.max(
@@ -1438,168 +1533,213 @@ function setZoom(
     );
 
 
-  lightboxImage.style.transform =
-    `scale(${state.zoom})`;
+  if (lightboxImage) {
+
+    lightboxImage.style.transform =
+      `scale(${state.zoom})`;
+
+  }
 
 }
 
 
-zoomIn.addEventListener(
-  "click",
-  event => {
+/* ============================================================
+   ZOOM BUTTONS
+   ============================================================ */
 
-    event.stopPropagation();
+if (zoomInButton) {
 
-    setZoom(
-      state.zoom + 0.25
-    );
+  zoomInButton.addEventListener(
+    "click",
+    event => {
 
-  }
-);
+      event.stopPropagation();
 
-
-zoomOut.addEventListener(
-  "click",
-  event => {
-
-    event.stopPropagation();
-
-    setZoom(
-      state.zoom - 0.25
-    );
-
-  }
-);
-
-
-zoomReset.addEventListener(
-  "click",
-  event => {
-
-    event.stopPropagation();
-
-    setZoom(1);
-
-  }
-);
-
-
-/*
- * ============================================================
- * MOUSE WHEEL ZOOM
- * ============================================================
- */
-
-lightboxImage.addEventListener(
-  "wheel",
-  event => {
-
-    event.preventDefault();
-
-    setZoom(
-      state.zoom +
-      (
-        event.deltaY < 0
-          ? 0.15
-          : -0.15
-      )
-    );
-
-  },
-  {
-    passive: false
-  }
-);
-
-
-/*
- * ============================================================
- * CLICK IMAGE = NEXT
- * ============================================================
- */
-
-lightboxImage.addEventListener(
-  "click",
-  event => {
-
-    event.stopPropagation();
-
-    nextImageAction();
-
-  }
-);
-
-
-/*
- * ============================================================
- * BUTTONS
- * ============================================================
- */
-
-closeLightbox.addEventListener(
-  "click",
-  closeLightbox
-);
-
-
-prevImage.addEventListener(
-  "click",
-  event => {
-
-    event.stopPropagation();
-
-    previousImageAction();
-
-  }
-);
-
-
-nextImage.addEventListener(
-  "click",
-  event => {
-
-    event.stopPropagation();
-
-    nextImageAction();
-
-  }
-);
-
-
-/*
- * ============================================================
- * CLICK OUTSIDE = CLOSE
- * ============================================================
- */
-
-lightbox.addEventListener(
-  "click",
-  event => {
-
-    if (
-      event.target ===
-      lightbox
-    ) {
-
-      closeLightbox();
+      setZoom(
+        state.zoom + 0.25
+      );
 
     }
+  );
 
-  }
-);
+}
 
 
-/*
- * ============================================================
- * KEYBOARD
- * ============================================================
- */
+if (zoomOutButton) {
+
+  zoomOutButton.addEventListener(
+    "click",
+    event => {
+
+      event.stopPropagation();
+
+      setZoom(
+        state.zoom - 0.25
+      );
+
+    }
+  );
+
+}
+
+
+if (zoomResetButton) {
+
+  zoomResetButton.addEventListener(
+    "click",
+    event => {
+
+      event.stopPropagation();
+
+      setZoom(1);
+
+    }
+  );
+
+}
+
+
+/* ============================================================
+   MOUSE WHEEL ZOOM
+   ============================================================ */
+
+if (lightboxImage) {
+
+  lightboxImage.addEventListener(
+    "wheel",
+    event => {
+
+      event.preventDefault();
+
+
+      setZoom(
+
+        state.zoom +
+
+        (
+          event.deltaY < 0
+            ? 0.15
+            : -0.15
+        )
+
+      );
+
+    },
+
+    {
+      passive: false
+    }
+  );
+
+}
+
+
+/* ============================================================
+   CLICK IMAGE = NEXT IMAGE
+   ============================================================ */
+
+if (lightboxImage) {
+
+  lightboxImage.addEventListener(
+    "click",
+    event => {
+
+      event.stopPropagation();
+
+      nextImageAction();
+
+    }
+  );
+
+}
+
+
+/* ============================================================
+   LIGHTBOX BUTTONS
+   ============================================================ */
+
+if (closeLightboxButton) {
+
+  closeLightboxButton.addEventListener(
+    "click",
+    event => {
+
+      event.stopPropagation();
+
+      closeLightboxViewer();
+
+    }
+  );
+
+}
+
+
+if (prevImageButton) {
+
+  prevImageButton.addEventListener(
+    "click",
+    event => {
+
+      event.stopPropagation();
+
+      previousImageAction();
+
+    }
+  );
+
+}
+
+
+if (nextImageButton) {
+
+  nextImageButton.addEventListener(
+    "click",
+    event => {
+
+      event.stopPropagation();
+
+      nextImageAction();
+
+    }
+  );
+
+}
+
+
+/* ============================================================
+   CLICK DARK BACKGROUND = CLOSE
+   ============================================================ */
+
+if (lightbox) {
+
+  lightbox.addEventListener(
+    "click",
+    event => {
+
+      if (
+        event.target === lightbox
+      ) {
+
+        closeLightboxViewer();
+
+      }
+
+    }
+  );
+
+}
+
+
+/* ============================================================
+   KEYBOARD CONTROLS
+   ============================================================ */
 
 document.addEventListener(
   "keydown",
   event => {
 
     if (
+      !lightbox ||
       lightbox.classList
         .contains("hidden")
     ) {
@@ -1609,21 +1749,27 @@ document.addEventListener(
     }
 
 
+    /*
+     * ESC
+     */
+
     if (
-      event.key ===
-      "Escape"
+      event.key === "Escape"
     ) {
 
-      closeLightbox();
+      closeLightboxViewer();
 
       return;
 
     }
 
 
+    /*
+     * Previous
+     */
+
     if (
-      event.key ===
-      "ArrowLeft"
+      event.key === "ArrowLeft"
     ) {
 
       previousImageAction();
@@ -1633,9 +1779,12 @@ document.addEventListener(
     }
 
 
+    /*
+     * Next
+     */
+
     if (
-      event.key ===
-      "ArrowRight"
+      event.key === "ArrowRight"
     ) {
 
       nextImageAction();
@@ -1645,12 +1794,13 @@ document.addEventListener(
     }
 
 
+    /*
+     * Zoom +
+     */
+
     if (
-      event.key ===
-      "+"
-      ||
-      event.key ===
-      "="
+      event.key === "+" ||
+      event.key === "="
     ) {
 
       setZoom(
@@ -1662,9 +1812,12 @@ document.addEventListener(
     }
 
 
+    /*
+     * Zoom -
+     */
+
     if (
-      event.key ===
-      "-"
+      event.key === "-"
     ) {
 
       setZoom(
@@ -1676,9 +1829,12 @@ document.addEventListener(
     }
 
 
+    /*
+     * Reset zoom
+     */
+
     if (
-      event.key ===
-      "0"
+      event.key === "0"
     ) {
 
       setZoom(1);
@@ -1689,153 +1845,170 @@ document.addEventListener(
 );
 
 
-/*
- * ============================================================
- * MOBILE SWIPE
- * ============================================================
- */
+/* ============================================================
+   MOBILE SWIPE
+   ============================================================ */
 
 let touchStartX = 0;
 
 let touchStartY = 0;
 
 
-lightboxImage.addEventListener(
-  "touchstart",
-  event => {
+if (lightboxImage) {
 
-    if (
-      !event.touches.length
-    ) {
+  lightboxImage.addEventListener(
+    "touchstart",
+    event => {
 
-      return;
+      if (
+        !event.touches.length
+      ) {
 
-    }
+        return;
 
-
-    touchStartX =
-      event.touches[0].clientX;
+      }
 
 
-    touchStartY =
-      event.touches[0].clientY;
-
-  },
-  {
-    passive: true
-  }
-);
+      touchStartX =
+        event.touches[0].clientX;
 
 
-lightboxImage.addEventListener(
-  "touchend",
-  event => {
+      touchStartY =
+        event.touches[0].clientY;
 
-    if (
-      !event.changedTouches.length
-    ) {
+    },
 
-      return;
-
-    }
-
-
-    const endX =
-      event.changedTouches[0].clientX;
-
-
-    const endY =
-      event.changedTouches[0].clientY;
-
-
-    const distanceX =
-      endX - touchStartX;
-
-
-    const distanceY =
-      endY - touchStartY;
-
-
-    /*
-     * Only treat horizontal movement as swipe.
-     */
-
-    if (
-      Math.abs(distanceX) < 50 ||
-      Math.abs(distanceX) <
-      Math.abs(distanceY)
-    ) {
-
-      return;
-
-    }
-
-
-    if (
-      distanceX < 0
-    ) {
-
-      nextImageAction();
-
-    }
-
-    else {
-
-      previousImageAction();
-
-    }
-
-  },
-  {
-    passive: true
-  }
-);
-
-
-/*
- * ============================================================
- * TAB BUTTONS
- * ============================================================
- */
-
-document
-  .querySelectorAll(".tab")
-  .forEach(
-    button => {
-
-      button.addEventListener(
-        "click",
-        () => {
-
-          state.section =
-            button.dataset.section;
-
-
-          /*
-           * Reset filter when switching sections
-           * only if current filter doesn't exist there.
-           */
-
-          updatePlatformUrl();
-
-          render();
-
-        }
-      );
-
+    {
+      passive: true
     }
   );
 
 
-/*
- * ============================================================
- * BROWSER BACK / FORWARD
- * ============================================================
- */
+  lightboxImage.addEventListener(
+    "touchend",
+    event => {
+
+      if (
+        !event.changedTouches.length
+      ) {
+
+        return;
+
+      }
+
+
+      const endX =
+        event.changedTouches[0].clientX;
+
+
+      const endY =
+        event.changedTouches[0].clientY;
+
+
+      const distanceX =
+        endX - touchStartX;
+
+
+      const distanceY =
+        endY - touchStartY;
+
+
+      /*
+       * Ignore small or vertical movements.
+       */
+
+      if (
+        Math.abs(distanceX) < 50 ||
+        Math.abs(distanceX) <
+          Math.abs(distanceY)
+      ) {
+
+        return;
+
+      }
+
+
+      /*
+       * Swipe left = next
+       */
+
+      if (
+        distanceX < 0
+      ) {
+
+        nextImageAction();
+
+      }
+
+      /*
+       * Swipe right = previous
+       */
+
+      else {
+
+        previousImageAction();
+
+      }
+
+    },
+
+    {
+      passive: true
+    }
+  );
+
+}
+
+
+/* ============================================================
+   TAB BUTTONS
+   ============================================================ */
+
+document
+  .querySelectorAll(".tab")
+  .forEach(button => {
+
+    button.addEventListener(
+      "click",
+      () => {
+
+        state.section =
+          button.dataset.section;
+
+
+        updatePlatformUrl();
+
+        render();
+
+      }
+    );
+
+  });
+
+
+/* ============================================================
+   BROWSER BACK / FORWARD
+   ============================================================ */
 
 window.addEventListener(
   "popstate",
   () => {
+
+    /*
+     * Reset filters first.
+     */
+
+    state.feedbackFilter =
+      "All";
+
+
+    state.resolvedFilter =
+      "All";
+
+
+    state.section =
+      "feedback";
+
 
     applyUrlState();
 
@@ -1845,10 +2018,8 @@ window.addEventListener(
 );
 
 
-/*
- * ============================================================
- * START
- * ============================================================
- */
+/* ============================================================
+   START
+   ============================================================ */
 
 loadData();
