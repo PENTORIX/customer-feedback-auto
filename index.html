@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customer Feedback</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="header">
+    <div class="container">
+      <h1>Customer Feedback</h1>
+      <p>Real feedback from our buyers.</p>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="tabs">
+      <button class="tab active" data-section="feedback">Customer Feedback</button>
+      <button class="tab" data-section="resolved">Resolved Issues</button>
+    </div>
+
+    <div id="feedbackSection">
+      <div class="section-head">
+        <h2>Customer Feedback</h2>
+        <div id="feedbackFilters" class="filters"></div>
+      </div>
+      <div id="feedbackGrid" class="grid"></div>
+    </div>
+
+    <div id="resolvedSection" class="hidden">
+      <div class="section-head">
+        <h2>Resolved Issues</h2>
+        <div id="resolvedFilters" class="filters"></div>
+      </div>
+      <div id="resolvedGrid" class="grid"></div>
+    </div>
+  </main>
+
+  <div id="lightbox" class="lightbox hidden">
+    <button id="closeLightbox" class="close">&times;</button>
+    <button id="prevImage" class="nav prev">&#10094;</button>
+    <img id="lightboxImage" src="" alt="Buyer feedback">
+    <button id="nextImage" class="nav next">&#10095;</button>
+  </div>
+
+  <footer>
+    <p>Thank you for your support ❤️</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
