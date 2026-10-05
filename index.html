@@ -4,92 +4,466 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#0b0d12">
+  <meta
+    name="description"
+    content="John Wayne PHC Feedback Center — customer transaction feedback and resolved support issues."
+  >
+
   <title>John Wayne • Customer Feedback</title>
+
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
+
+  <!-- =========================================================
+       BACKGROUND GLOW
+       ========================================================= -->
+
   <div class="page-glow page-glow-one"></div>
   <div class="page-glow page-glow-two"></div>
 
+
+  <!-- =========================================================
+       HEADER
+       ========================================================= -->
+
   <header class="header">
     <div class="container header-inner">
+
       <div class="brand-block">
-        <div class="brand-mark" aria-hidden="true">JW</div>
-        <div>
-          <div class="brand-name">John Wayne</div>
-          <div class="brand-subtitle">PHC Feedback Center</div>
+
+        <div class="brand-mark" aria-hidden="true">
+          JW
         </div>
+
+        <div>
+          <div class="brand-name">
+            John Wayne
+          </div>
+
+          <div class="brand-subtitle">
+            PHC Feedback Center
+          </div>
+        </div>
+
       </div>
 
+
       <div class="header-copy">
-        <span class="eyebrow">CUSTOMER EXPERIENCE</span>
-        <h1>Customer Feedback</h1>
-        <p>Real transaction feedback and resolved support issues.</p>
+
+        <span class="eyebrow">
+          CUSTOMER EXPERIENCE
+        </span>
+
+        <h1>
+          Customer Feedback
+        </h1>
+
+        <p>
+          Real transaction feedback and resolved support issues.
+        </p>
+
       </div>
+
     </div>
   </header>
 
+
+
+  <!-- =========================================================
+       MAIN CONTENT
+       ========================================================= -->
+
   <main class="container main-content">
+
+    <!-- =======================================================
+         TABS
+         ======================================================= -->
+
     <div class="tabs-wrap">
-      <div class="tabs" role="tablist" aria-label="Feedback sections">
-        <button class="tab active" data-section="feedback" role="tab">
-          <span class="tab-icon">★</span>
+
+      <div
+        class="tabs"
+        role="tablist"
+        aria-label="Feedback sections"
+      >
+
+        <button
+          class="tab active"
+          data-section="feedback"
+          role="tab"
+          aria-selected="true"
+        >
+          <span class="tab-icon" aria-hidden="true">
+            ★
+          </span>
+
           Customer Feedback
         </button>
-        <button class="tab" data-section="resolved" role="tab">
-          <span class="tab-icon">✓</span>
+
+
+        <button
+          class="tab"
+          data-section="resolved"
+          role="tab"
+          aria-selected="false"
+        >
+          <span class="tab-icon" aria-hidden="true">
+            ✓
+          </span>
+
           Resolved Issues
         </button>
+
       </div>
+
 
       <div class="trust-note">
-        <span class="trust-dot"></span>
+
+        <span
+          class="trust-dot"
+          aria-hidden="true"
+        ></span>
+
         Verified transaction screenshots
+
       </div>
+
     </div>
+
+
+
+    <!-- =======================================================
+         CUSTOMER FEEDBACK SECTION
+         ======================================================= -->
 
     <div id="feedbackSection">
+
       <div class="section-head">
+
         <div>
-          <span class="section-kicker">TRANSACTIONS</span>
-          <h2>Customer Feedback</h2>
-          <p>Browse feedback by platform.</p>
+
+          <span class="section-kicker">
+            TRANSACTIONS
+          </span>
+
+          <h2>
+            Customer Feedback
+          </h2>
+
+          <p>
+            Browse feedback by platform.
+          </p>
+
         </div>
-        <div id="feedbackFilters" class="filters"></div>
+
+
+        <div
+          id="feedbackFilters"
+          class="filters"
+        ></div>
+
       </div>
-      <div id="feedbackGrid" class="grid"></div>
+
+
+      <div
+        id="feedbackGrid"
+        class="grid"
+      ></div>
+
     </div>
 
-    <div id="resolvedSection" class="hidden">
+
+
+    <!-- =======================================================
+         RESOLVED ISSUES SECTION
+         ======================================================= -->
+
+    <div
+      id="resolvedSection"
+      class="hidden"
+    >
+
       <div class="section-head">
+
         <div>
-          <span class="section-kicker resolved-kicker">SUPPORT</span>
-          <h2>Resolved Issues</h2>
-          <p>Issues that have already been handled.</p>
+
+          <span class="section-kicker resolved-kicker">
+            SUPPORT
+          </span>
+
+          <h2>
+            Resolved Issues
+          </h2>
+
+          <p>
+            Issues that have already been handled.
+          </p>
+
         </div>
-        <div id="resolvedFilters" class="filters"></div>
+
+
+        <div
+          id="resolvedFilters"
+          class="filters"
+        ></div>
+
       </div>
-      <div id="resolvedGrid" class="grid"></div>
+
+
+      <div
+        id="resolvedGrid"
+        class="grid"
+      ></div>
+
     </div>
+
   </main>
 
-  <div id="lightbox" class="lightbox hidden" aria-hidden="true">
-    <button id="closeLightbox" class="close" aria-label="Close">&times;</button>
-    <button id="prevImage" class="nav prev" aria-label="Previous image">&#10094;</button>
-    <img id="lightboxImage" src="" alt="Buyer feedback">
-    <button id="nextImage" class="nav next" aria-label="Next image">&#10095;</button>
+
+
+  <!-- =========================================================
+       CONTACT SUPPORT
+       ========================================================= -->
+
+  <section class="support-section">
+
+    <div class="container">
+
+      <div class="support-header">
+
+        <span class="support-kicker">
+          NEED HELP?
+        </span>
+
+        <h2>
+          Contact Support
+        </h2>
+
+        <p>
+          If you have questions about a transaction or need assistance,
+          you can contact me through any of the channels below.
+        </p>
+
+      </div>
+
+
+      <div class="support-grid">
+
+
+        <!-- ===================================================
+             TELEGRAM
+             =================================================== -->
+
+        <a
+          class="support-card telegram"
+          href="https://t.me/D34dFrequency404"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Contact John Wayne on Telegram"
+        >
+
+          <div
+            class="support-icon"
+            aria-hidden="true"
+          >
+            ✈
+          </div>
+
+
+          <div class="support-info">
+
+            <span class="support-platform">
+              Telegram
+            </span>
+
+            <strong>
+              @D34dFrequency404
+            </strong>
+
+            <small>
+              Contact me →
+            </small>
+
+          </div>
+
+        </a>
+
+
+
+        <!-- ===================================================
+             FACEBOOK
+             =================================================== -->
+
+        <a
+          class="support-card facebook"
+          href="https://www.facebook.com/iamuser404/"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Visit John Wayne on Facebook"
+        >
+
+          <div
+            class="support-icon"
+            aria-hidden="true"
+          >
+            f
+          </div>
+
+
+          <div class="support-info">
+
+            <span class="support-platform">
+              Facebook
+            </span>
+
+            <strong>
+              John Wayne
+            </strong>
+
+            <small>
+              View profile →
+            </small>
+
+          </div>
+
+        </a>
+
+
+
+        <!-- ===================================================
+             PHCORNER
+             =================================================== -->
+
+        <a
+          class="support-card phcorner"
+          href="https://phcorner.org/direct-messages/add?to=John+Wayne"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Message John Wayne on PHCorner"
+        >
+
+          <div
+            class="support-icon"
+            aria-hidden="true"
+          >
+            P
+          </div>
+
+
+          <div class="support-info">
+
+            <span class="support-platform">
+              PHCorner
+            </span>
+
+            <strong>
+              John Wayne
+            </strong>
+
+            <small>
+              Send me a message →
+            </small>
+
+          </div>
+
+        </a>
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+
+  <!-- =========================================================
+       LIGHTBOX
+       ========================================================= -->
+
+  <div
+    id="lightbox"
+    class="lightbox hidden"
+    aria-hidden="true"
+  >
+
+    <button
+      id="closeLightbox"
+      class="close"
+      aria-label="Close"
+    >
+      &times;
+    </button>
+
+
+    <button
+      id="prevImage"
+      class="nav prev"
+      aria-label="Previous image"
+    >
+      &#10094;
+    </button>
+
+
+    <img
+      id="lightboxImage"
+      src=""
+      alt="Buyer feedback"
+    >
+
+
+    <button
+      id="nextImage"
+      class="nav next"
+      aria-label="Next image"
+    >
+      &#10095;
+    </button>
+
   </div>
 
+
+
+  <!-- =========================================================
+       FOOTER
+       ========================================================= -->
+
   <footer>
+
     <div class="container footer-inner">
+
       <div>
-        <strong>John Wayne</strong>
-        <span> • PHC Feedback Center</span>
+
+        <strong>
+          John Wayne
+        </strong>
+
+        <span>
+          • PHC Feedback Center
+        </span>
+
       </div>
-      <p>Thank you for your support <span aria-hidden="true">❤</span></p>
+
+
+      <p>
+        Thank you for your support
+        <span aria-hidden="true">
+          ❤
+        </span>
+      </p>
+
     </div>
+
   </footer>
 
+
+
+  <!-- =========================================================
+       JAVASCRIPT
+       ========================================================= -->
+
   <script src="script.js"></script>
+
 </body>
 </html>
