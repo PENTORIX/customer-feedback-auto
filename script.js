@@ -7,12 +7,30 @@ const state = {
   currentIndex: 0
 };
 
-const feedbackGrid = document.getElementById("feedbackGrid");
-const resolvedGrid = document.getElementById("resolvedGrid");
-const feedbackFilters = document.getElementById("feedbackFilters");
-const resolvedFilters = document.getElementById("resolvedFilters");
-const feedbackSection = document.getElementById("feedbackSection");
-const resolvedSection = document.getElementById("resolvedSection");
+
+/*
+ * ============================================================
+ * DOM ELEMENTS
+ * ============================================================
+ */
+
+const feedbackGrid =
+  document.getElementById("feedbackGrid");
+
+const resolvedGrid =
+  document.getElementById("resolvedGrid");
+
+const feedbackFilters =
+  document.getElementById("feedbackFilters");
+
+const resolvedFilters =
+  document.getElementById("resolvedFilters");
+
+const feedbackSection =
+  document.getElementById("feedbackSection");
+
+const resolvedSection =
+  document.getElementById("resolvedSection");
 
 
 /*
@@ -20,7 +38,8 @@ const resolvedSection = document.getElementById("resolvedSection");
  * PLATFORM BRANDING
  * ============================================================
  *
- * These correspond to the folder/item names in feedback-index.json:
+ * These correspond to the folder/item names in
+ * feedback-index.json:
  *
  * crayoai
  * esim
@@ -151,9 +170,11 @@ async function loadData() {
     );
 
     if (!res.ok) {
+
       throw new Error(
         "Could not load feedback index"
       );
+
     }
 
     state.items = await res.json();
@@ -260,13 +281,16 @@ function renderFilters(section, container) {
 
   products(getItems(section)).forEach(product => {
 
-    const b = document.createElement("button");
+    const b =
+      document.createElement("button");
 
     b.className =
       "filter" +
-      (getFilter(section) === product
-        ? " active"
-        : "");
+      (
+        getFilter(section) === product
+          ? " active"
+          : ""
+      );
 
     const label =
       product === "All"
@@ -280,6 +304,7 @@ function renderFilters(section, container) {
 
         : `
           ${platformLogoHtml(product, true)}
+
           <span>
             ${escapeHtml(label)}
           </span>
@@ -303,23 +328,40 @@ function renderFilters(section, container) {
 
 /*
  * ============================================================
+ * GET FILTERED ITEMS
+ * ============================================================
+ */
+
+function getFilteredItems(section) {
+
+  const filter =
+    getFilter(section);
+
+  return getItems(section).filter(
+    x =>
+      filter === "All" ||
+      x.item === filter
+  );
+
+}
+
+
+/*
+ * ============================================================
  * RENDER FEEDBACK CARDS
  * ============================================================
  */
 
 function renderCards(section, container) {
 
-  const filter = getFilter(section);
-
-  const items = getItems(section).filter(
-    x =>
-      filter === "All" ||
-      x.item === filter
-  );
+  const items =
+    getFilteredItems(section);
 
 
   /*
+   * ----------------------------------------------------------
    * No results
+   * ----------------------------------------------------------
    */
 
   if (!items.length) {
@@ -333,123 +375,161 @@ function renderCards(section, container) {
 
 
   /*
+   * ----------------------------------------------------------
    * Build cards
+   * ----------------------------------------------------------
    */
 
-  container.innerHTML = items.map(item => {
+  container.innerHTML =
+    items.map(item => {
 
-    const platform =
-      platformInfo(item.item);
+      const platform =
+        platformInfo(item.item);
 
-    const statusClass =
-      section === "resolved"
-        ? "resolved"
-        : "positive";
+      const statusClass =
+        section === "resolved"
+          ? "resolved"
+          : "positive";
 
-    const statusText =
-      section === "resolved"
-        ? "Resolved"
-        : "Feedback";
+      const statusText =
+        section === "resolved"
+          ? "Resolved"
+          : "Feedback";
 
 
-    return `
+      return `
 
-      <article class="card">
+        <article class="card">
 
-        <div class="card-info">
+          <div class="card-info">
 
-          <div class="meta">
+            <div class="meta">
 
-            <!-- BUYER -->
+              <!-- BUYER -->
 
-            <span class="buyer">
+              <span class="buyer">
 
-              <span
-                class="buyer-icon"
-                aria-hidden="true"
-              >
-                ●
+                <span
+                  class="buyer-icon"
+                  aria-hidden="true"
+                >
+                  ●
+                </span>
+
+                <strong>
+                  ${escapeHtml(
+                    item.buyer || "Buyer"
+                  )}
+                </strong>
+
               </span>
 
-              <strong>
-                ${escapeHtml(
-                  item.buyer || "Buyer"
+
+              <!-- PLATFORM -->
+
+              <span class="platform">
+
+                ${platformLogoHtml(
+                  item.item
                 )}
-              </strong>
 
-            </span>
+                <strong>
+                  ${escapeHtml(
+                    platform.name
+                  )}
+                </strong>
+
+              </span>
+
+            </div>
 
 
-            <!-- PLATFORM -->
+            <!-- STATUS -->
 
-            <span class="platform">
+            <span
+              class="status ${statusClass}"
+            >
 
-              ${platformLogoHtml(
-                item.item
-              )}
+              ${
+                section === "resolved"
+                  ? "●"
+                  : "★"
+              }
 
-              <strong>
-                ${escapeHtml(
-                  platform.name
-                )}
-              </strong>
+              ${statusText}
 
             </span>
 
           </div>
 
 
-          <!-- STATUS -->
+          <!-- FEEDBACK IMAGE -->
 
-          <span
-            class="status ${statusClass}"
-          >
+          <div class="images">
 
-            ${
-              section === "resolved"
-                ? "●"
-                : "★"
-            }
+            <img
+              class="feedback-image"
+              src="${encodeURI(
+                item.image
+              )}"
+              alt="${escapeHtml(
+                platform.name
+              )} customer feedback"
+              loading="lazy"
+              data-image="${escapeHtml(
+                item.image
+              )}"
+            >
 
-            ${statusText}
+          </div>
 
-          </span>
+        </article>
 
-        </div>
+      `;
+
+    }).join("");
 
 
-        <!-- FEEDBACK IMAGE -->
+  /*
+   * ----------------------------------------------------------
+   * ADD CLICK EVENTS AFTER CARDS ARE RENDERED
+   * ----------------------------------------------------------
+   *
+   * IMPORTANT:
+   * Instead of opening only the clicked image,
+   * we create a gallery from ALL currently filtered
+   * screenshots.
+   */
 
-        <div class="images">
+  const imageElements =
+    container.querySelectorAll(
+      ".feedback-image"
+    );
 
-          <img
 
-            class="feedback-image"
+  imageElements.forEach(
+    (imageElement, clickedIndex) => {
 
-            src="${encodeURI(
-              item.image
-            )}"
+      imageElement.addEventListener(
+        "click",
+        () => {
 
-            alt="${escapeHtml(
-              platform.name
-            )} customer feedback"
+          const gallery =
+            items
+              .map(item => item.image)
+              .filter(Boolean);
 
-            loading="lazy"
 
-            onclick='openLightbox(
-              ${JSON.stringify([item.image])},
-              0
-            )'
+          openLightbox(
+            gallery,
+            clickedIndex
+          );
 
-          >
+        }
+      );
 
-        </div>
-
-      </article>
-
-    `;
-
-  }).join("");
+    }
+  );
 
 }
 
@@ -508,6 +588,13 @@ function render() {
         b.dataset.section === state.section
       );
 
+      b.setAttribute(
+        "aria-selected",
+        b.dataset.section === state.section
+          ? "true"
+          : "false"
+      );
+
     });
 
 }
@@ -553,7 +640,7 @@ function escapeHtml(v) {
 
 /*
  * ============================================================
- * LIGHTBOX
+ * LIGHTBOX ELEMENTS
  * ============================================================
  */
 
@@ -569,19 +656,43 @@ const lightboxImage =
 
 
 /*
+ * ============================================================
  * OPEN LIGHTBOX
+ * ============================================================
  */
 
 function openLightbox(
   images,
-  index
+  index = 0
 ) {
 
+  if (
+    !Array.isArray(images) ||
+    !images.length
+  ) {
+
+    return;
+
+  }
+
+
   state.currentImages =
-    images;
+    images.filter(Boolean);
+
+
+  if (
+    index < 0 ||
+    index >= state.currentImages.length
+  ) {
+
+    index = 0;
+
+  }
+
 
   state.currentIndex =
     index;
+
 
   lightbox.classList.remove(
     "hidden"
@@ -592,27 +703,66 @@ function openLightbox(
     "false"
   );
 
+
+  /*
+   * Prevent background page scrolling
+   * while lightbox is open.
+   */
+
+  document.body.style.overflow =
+    "hidden";
+
+
   updateLightbox();
 
 }
 
 
 /*
+ * ============================================================
  * UPDATE LIGHTBOX IMAGE
+ * ============================================================
  */
 
 function updateLightbox() {
 
-  lightboxImage.src =
+  if (
+    !state.currentImages.length
+  ) {
+
+    return;
+
+  }
+
+
+  const image =
     state.currentImages[
       state.currentIndex
     ];
+
+
+  lightboxImage.src =
+    encodeURI(image);
+
+
+  /*
+   * Update alt text
+   */
+
+  lightboxImage.alt =
+    `Feedback image ${
+      state.currentIndex + 1
+    } of ${
+      state.currentImages.length
+    }`;
 
 }
 
 
 /*
+ * ============================================================
  * CLOSE LIGHTBOX
+ * ============================================================
  */
 
 function closeLightbox() {
@@ -625,6 +775,82 @@ function closeLightbox() {
     "aria-hidden",
     "true"
   );
+
+
+  /*
+   * Restore page scrolling.
+   */
+
+  document.body.style.overflow =
+    "";
+
+
+  /*
+   * Clear gallery state.
+   */
+
+  state.currentImages = [];
+
+  state.currentIndex = 0;
+
+}
+
+
+/*
+ * ============================================================
+ * PREVIOUS IMAGE
+ * ============================================================
+ */
+
+function previousImage() {
+
+  if (
+    !state.currentImages.length
+  ) {
+
+    return;
+
+  }
+
+
+  state.currentIndex =
+    (
+      state.currentIndex - 1 +
+      state.currentImages.length
+    ) %
+    state.currentImages.length;
+
+
+  updateLightbox();
+
+}
+
+
+/*
+ * ============================================================
+ * NEXT IMAGE
+ * ============================================================
+ */
+
+function nextImage() {
+
+  if (
+    !state.currentImages.length
+  ) {
+
+    return;
+
+  }
+
+
+  state.currentIndex =
+    (
+      state.currentIndex + 1
+    ) %
+    state.currentImages.length;
+
+
+  updateLightbox();
 
 }
 
@@ -660,70 +886,95 @@ document
  * ============================================================
  */
 
-document
-  .getElementById(
+const closeButton =
+  document.getElementById(
     "closeLightbox"
-  )
-  .onclick = closeLightbox;
+  );
+
+
+if (closeButton) {
+
+  closeButton.onclick =
+    closeLightbox;
+
+}
 
 
 /*
  * ============================================================
- * PREVIOUS IMAGE
+ * PREVIOUS BUTTON
  * ============================================================
  */
 
-document
-  .getElementById(
+const previousButton =
+  document.getElementById(
     "prevImage"
-  )
-  .onclick = () => {
+  );
 
-    if (
-      !state.currentImages.length
-    ) {
-      return;
-    }
 
-    state.currentIndex =
-      (
-        state.currentIndex - 1 +
-        state.currentImages.length
-      ) %
-      state.currentImages.length;
+if (previousButton) {
 
-    updateLightbox();
+  previousButton.onclick =
+    previousImage;
 
-  };
+}
 
 
 /*
  * ============================================================
- * NEXT IMAGE
+ * NEXT BUTTON
  * ============================================================
  */
 
-document
-  .getElementById(
+const nextButton =
+  document.getElementById(
     "nextImage"
-  )
-  .onclick = () => {
+  );
 
-    if (
-      !state.currentImages.length
-    ) {
-      return;
-    }
 
-    state.currentIndex =
-      (
-        state.currentIndex + 1
-      ) %
-      state.currentImages.length;
+if (nextButton) {
 
-    updateLightbox();
+  nextButton.onclick =
+    nextImage;
 
-  };
+}
+
+
+/*
+ * ============================================================
+ * CLICK IMAGE = NEXT IMAGE
+ * ============================================================
+ *
+ * This is the new behavior:
+ *
+ * Click screenshot
+ *       ↓
+ * Next screenshot
+ *
+ * The arrows continue to work normally.
+ * ============================================================
+ */
+
+lightboxImage.addEventListener(
+  "click",
+  event => {
+
+    /*
+     * Prevent the click from reaching
+     * the lightbox background.
+     */
+
+    event.stopPropagation();
+
+
+    /*
+     * Go to the next screenshot.
+     */
+
+    nextImage();
+
+  }
+);
 
 
 /*
@@ -734,10 +985,15 @@ document
 
 lightbox.addEventListener(
   "click",
-  e => {
+  event => {
+
+    /*
+     * Only close when the actual
+     * dark background is clicked.
+     */
 
     if (
-      e.target === lightbox
+      event.target === lightbox
     ) {
 
       closeLightbox();
@@ -752,11 +1008,16 @@ lightbox.addEventListener(
  * ============================================================
  * KEYBOARD CONTROLS
  * ============================================================
+ *
+ * ESC        = Close
+ * ArrowLeft  = Previous
+ * ArrowRight = Next
+ * ============================================================
  */
 
 document.addEventListener(
   "keydown",
-  e => {
+  event => {
 
     if (
       lightbox.classList.contains(
@@ -770,36 +1031,34 @@ document.addEventListener(
 
 
     if (
-      e.key === "Escape"
+      event.key === "Escape"
     ) {
 
       closeLightbox();
 
-    }
-
-
-    if (
-      e.key === "ArrowLeft"
-    ) {
-
-      document
-        .getElementById(
-          "prevImage"
-        )
-        .click();
+      return;
 
     }
 
 
     if (
-      e.key === "ArrowRight"
+      event.key === "ArrowLeft"
     ) {
 
-      document
-        .getElementById(
-          "nextImage"
-        )
-        .click();
+      previousImage();
+
+      return;
+
+    }
+
+
+    if (
+      event.key === "ArrowRight"
+    ) {
+
+      nextImage();
+
+      return;
 
     }
 
@@ -809,7 +1068,91 @@ document.addEventListener(
 
 /*
  * ============================================================
- * START
+ * MOBILE TOUCH / SWIPE SUPPORT
+ * ============================================================
+ *
+ * Swipe left  = Next
+ * Swipe right = Previous
+ * ============================================================
+ */
+
+let touchStartX = 0;
+let touchEndX = 0;
+
+
+lightboxImage.addEventListener(
+  "touchstart",
+  event => {
+
+    if (
+      event.touches &&
+      event.touches.length
+    ) {
+
+      touchStartX =
+        event.touches[0].clientX;
+
+    }
+
+  },
+  {
+    passive: true
+  }
+);
+
+
+lightboxImage.addEventListener(
+  "touchend",
+  event => {
+
+    if (
+      event.changedTouches &&
+      event.changedTouches.length
+    ) {
+
+      touchEndX =
+        event.changedTouches[0].clientX;
+
+    }
+
+
+    const distance =
+      touchEndX - touchStartX;
+
+
+    /*
+     * Ignore tiny movements.
+     */
+
+    if (
+      Math.abs(distance) < 50
+    ) {
+
+      return;
+
+    }
+
+
+    if (distance < 0) {
+
+      nextImage();
+
+    } else {
+
+      previousImage();
+
+    }
+
+  },
+  {
+    passive: true
+  }
+);
+
+
+/*
+ * ============================================================
+ * START APPLICATION
  * ============================================================
  */
 
