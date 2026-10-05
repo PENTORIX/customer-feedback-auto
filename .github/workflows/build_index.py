@@ -25,9 +25,6 @@ VALID_EXT = {
 # ============================================================
 
 def clean_text(text):
-    """
-    Clean OCR output.
-    """
 
     text = re.sub(
         r"\s+",
@@ -135,7 +132,6 @@ def looks_like_username(text):
     ):
         return False
 
-    # Reject obvious sentence fragments.
     if re.search(
         r"[.!?,:;]",
         text
@@ -180,38 +176,13 @@ def find_username(image):
     width, height = image.size
 
     # --------------------------------------------------------
-    # Username area from the forum screenshot.
-    #
-    # Example screenshot:
-    #
-    # ┌────────────────┬──────────────────────────────────┐
-    # │                │                                  │
-    # │    Avatar      │            Feedback              │
-    # │                │                                  │
-    # │    Genesis     │                                  │
-    # │     Storm      │                                  │
-    # │                │                                  │
-    # │     Elite      │                                  │
-    # └────────────────┴──────────────────────────────────┘
-    #
-    # We intentionally exclude the avatar, PH and Elite badge.
+    # Username area.
     # --------------------------------------------------------
 
-    left = int(
-        width * 0.055
-    )
-
-    top = int(
-        height * 0.30
-    )
-
-    right = int(
-        width * 0.145
-    )
-
-    bottom = int(
-        height * 0.53
-    )
+    left = int(width * 0.045)
+    top = int(height * 0.27)
+    right = int(width * 0.17)
+    bottom = int(height * 0.62)
 
     crop = image.crop(
         (
@@ -223,19 +194,19 @@ def find_username(image):
     )
 
     # --------------------------------------------------------
-    # Enlarge username.
+    # Enlarge.
     # --------------------------------------------------------
 
     crop = crop.resize(
         (
-            crop.width * 10,
-            crop.height * 10
+            crop.width * 8,
+            crop.height * 8
         ),
         Image.Resampling.LANCZOS
     )
 
     # --------------------------------------------------------
-    # Grayscale / contrast / sharpening.
+    # Grayscale.
     # --------------------------------------------------------
 
     gray = ImageOps.grayscale(
@@ -251,7 +222,7 @@ def find_username(image):
     )
 
     # ========================================================
-    # OCR USING WORD POSITIONS
+    # OCR
     # ========================================================
 
     all_words = []
@@ -291,8 +262,7 @@ def find_username(image):
 
                 confidence = 0
 
-            # Ignore extremely low confidence OCR.
-            if confidence < 20:
+            if confidence < 15:
                 continue
 
             if not valid_word(
@@ -328,7 +298,7 @@ def find_username(image):
             )
 
     # ========================================================
-    # REMOVE DUPLICATE OCR RESULTS
+    # REMOVE DUPLICATES
     # ========================================================
 
     unique_words = []
@@ -351,7 +321,7 @@ def find_username(image):
                     -
                     existing["x"]
                 )
-                < 50
+                < 80
             )
 
             close_y = (
@@ -360,7 +330,7 @@ def find_username(image):
                     -
                     existing["y"]
                 )
-                < 50
+                < 100
             )
 
             if (
@@ -371,7 +341,6 @@ def find_username(image):
 
                 duplicate = True
 
-                # Keep the higher-confidence result.
                 if (
                     word["conf"]
                     >
@@ -391,7 +360,7 @@ def find_username(image):
             )
 
     # ========================================================
-    # SORT WORDS BY POSITION
+    # SORT BY POSITION
     # ========================================================
 
     unique_words.sort(
@@ -402,7 +371,7 @@ def find_username(image):
     )
 
     # ========================================================
-    # FIND TWO-LINE USERNAME
+    # TWO-LINE USERNAME
     #
     # Genesis
     # Storm
@@ -420,7 +389,6 @@ def find_username(image):
             i + 1:
         ]:
 
-            # Second word should be below first.
             if (
                 second["y"]
                 <=
@@ -434,34 +402,25 @@ def find_username(image):
                 first["y"]
             )
 
-            # They should be close vertically.
-            if (
-                vertical_distance
-                >
-                250
-            ):
+            # IMPORTANT:
+            # Image is enlarged 8x.
+            # Allow a much larger line gap.
+            if vertical_distance > 500:
                 continue
 
-            # They should generally be aligned.
             horizontal_distance = abs(
                 second["x"]
                 -
                 first["x"]
             )
 
-            if (
-                horizontal_distance
-                >
-                450
-            ):
+            if horizontal_distance > 500:
                 continue
 
             combined = (
                 first["text"]
-                +
-                " "
-                +
-                second["text"]
+                + " "
+                + second["text"]
             )
 
             combined = clean_text(
@@ -473,31 +432,26 @@ def find_username(image):
             ):
                 continue
 
-            # ----------------------------------------------
-            # Score
-            # ----------------------------------------------
-
             score = 100
 
-            # OCR confidence.
             score += (
                 first["conf"]
                 +
                 second["conf"]
             ) / 10
 
-            # Prefer words that are close together.
+            # Prefer closer lines.
             score -= (
                 vertical_distance
                 /
-                10
+                20
             )
 
-            # Prefer roughly aligned words.
+            # Prefer aligned words.
             score -= (
                 horizontal_distance
                 /
-                20
+                30
             )
 
             candidates.append(
@@ -508,7 +462,7 @@ def find_username(image):
             )
 
     # ========================================================
-    # RETURN BEST TWO-WORD USERNAME
+    # BEST TWO-WORD RESULT
     # ========================================================
 
     if candidates:
@@ -521,7 +475,7 @@ def find_username(image):
         return candidates[0][1]
 
     # ========================================================
-    # FALLBACK NORMAL OCR
+    # NORMAL OCR FALLBACK
     # ========================================================
 
     text = pytesseract.image_to_string(
@@ -548,7 +502,33 @@ def find_username(image):
                 line
             )
 
-    # Prefer two-word result.
+    # --------------------------------------------------------
+    # If OCR returns two separate lines,
+    # manually combine them.
+    # --------------------------------------------------------
+
+    if len(lines) >= 2:
+
+        for i in range(
+            len(lines) - 1
+        ):
+
+            combined = clean_text(
+                lines[i]
+                + " "
+                + lines[i + 1]
+            )
+
+            if looks_like_username(
+                combined
+            ):
+
+                return combined
+
+    # --------------------------------------------------------
+    # Two-word line.
+    # --------------------------------------------------------
+
     for line in lines:
 
         if len(
@@ -557,7 +537,10 @@ def find_username(image):
 
             return line
 
+    # --------------------------------------------------------
     # One-word fallback.
+    # --------------------------------------------------------
+
     if lines:
 
         return lines[0]
@@ -595,7 +578,7 @@ def format_product_name(
 
 
 # ============================================================
-# BUILD FEEDBACK INDEX
+# BUILD INDEX
 # ============================================================
 
 entries = []
@@ -622,19 +605,6 @@ for section in (
 
         continue
 
-    # --------------------------------------------------------
-    # Product folders:
-    #
-    # images/
-    #   feedback/
-    #       esim/
-    #       iwanttfc/
-    #
-    #   resolved/
-    #       esim/
-    #       iwanttfc/
-    # --------------------------------------------------------
-
     for product_folder in sorted(
         root.iterdir()
     ):
@@ -646,10 +616,6 @@ for section in (
             product_folder.name
         )
 
-        # ----------------------------------------------------
-        # Process every image.
-        # ----------------------------------------------------
-
         for image_path in sorted(
             product_folder.iterdir()
         ):
@@ -658,7 +624,6 @@ for section in (
                 image_path.suffix.lower()
                 not in VALID_EXT
             ):
-
                 continue
 
             print("")
@@ -705,10 +670,6 @@ for section in (
 
                 buyer = "Buyer"
 
-            # ------------------------------------------------
-            # Add entry.
-            # ------------------------------------------------
-
             entries.append(
                 {
                     "buyer": buyer,
@@ -720,7 +681,7 @@ for section in (
 
 
 # ============================================================
-# WRITE feedback-index.json
+# WRITE JSON
 # ============================================================
 
 output_file = (
@@ -740,7 +701,7 @@ output_file.write_text(
 
 
 # ============================================================
-# FINAL OUTPUT
+# DONE
 # ============================================================
 
 print("")
