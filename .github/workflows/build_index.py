@@ -534,13 +534,12 @@ for root_name in ("feedback", "resolved"):
 
                 buyer = "Buyer"
 
-            entries.append({
-                "buyer": buyer,
-                "item": product,
-                "type": root_name,
-                "image": image_path.as_posix()
-            })
-
+         entries.append({
+    "buyer": "PHC Legit Transaction",
+    "item": product,
+    "type": root_name,
+    "image": img_path.as_posix()
+})
 
 # ============================================================
 # WRITE JSON
