@@ -3,26 +3,58 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Customer Feedback</title>
+  <meta name="theme-color" content="#0b0d12">
+  <title>John Wayne • Customer Feedback</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <div class="page-glow page-glow-one"></div>
+  <div class="page-glow page-glow-two"></div>
+
   <header class="header">
-    <div class="container">
-      <h1>Customer Feedback</h1>
-      <p>Real feedback from our buyers.</p>
+    <div class="container header-inner">
+      <div class="brand-block">
+        <div class="brand-mark" aria-hidden="true">JW</div>
+        <div>
+          <div class="brand-name">John Wayne</div>
+          <div class="brand-subtitle">PHC Feedback Center</div>
+        </div>
+      </div>
+
+      <div class="header-copy">
+        <span class="eyebrow">CUSTOMER EXPERIENCE</span>
+        <h1>Customer Feedback</h1>
+        <p>Real transaction feedback and resolved support issues.</p>
+      </div>
     </div>
   </header>
 
-  <main class="container">
-    <div class="tabs">
-      <button class="tab active" data-section="feedback">Customer Feedback</button>
-      <button class="tab" data-section="resolved">Resolved Issues</button>
+  <main class="container main-content">
+    <div class="tabs-wrap">
+      <div class="tabs" role="tablist" aria-label="Feedback sections">
+        <button class="tab active" data-section="feedback" role="tab">
+          <span class="tab-icon">★</span>
+          Customer Feedback
+        </button>
+        <button class="tab" data-section="resolved" role="tab">
+          <span class="tab-icon">✓</span>
+          Resolved Issues
+        </button>
+      </div>
+
+      <div class="trust-note">
+        <span class="trust-dot"></span>
+        Verified transaction screenshots
+      </div>
     </div>
 
     <div id="feedbackSection">
       <div class="section-head">
-        <h2>Customer Feedback</h2>
+        <div>
+          <span class="section-kicker">TRANSACTIONS</span>
+          <h2>Customer Feedback</h2>
+          <p>Browse feedback by platform.</p>
+        </div>
         <div id="feedbackFilters" class="filters"></div>
       </div>
       <div id="feedbackGrid" class="grid"></div>
@@ -30,22 +62,32 @@
 
     <div id="resolvedSection" class="hidden">
       <div class="section-head">
-        <h2>Resolved Issues</h2>
+        <div>
+          <span class="section-kicker resolved-kicker">SUPPORT</span>
+          <h2>Resolved Issues</h2>
+          <p>Issues that have already been handled.</p>
+        </div>
         <div id="resolvedFilters" class="filters"></div>
       </div>
       <div id="resolvedGrid" class="grid"></div>
     </div>
   </main>
 
-  <div id="lightbox" class="lightbox hidden">
-    <button id="closeLightbox" class="close">&times;</button>
-    <button id="prevImage" class="nav prev">&#10094;</button>
+  <div id="lightbox" class="lightbox hidden" aria-hidden="true">
+    <button id="closeLightbox" class="close" aria-label="Close">&times;</button>
+    <button id="prevImage" class="nav prev" aria-label="Previous image">&#10094;</button>
     <img id="lightboxImage" src="" alt="Buyer feedback">
-    <button id="nextImage" class="nav next">&#10095;</button>
+    <button id="nextImage" class="nav next" aria-label="Next image">&#10095;</button>
   </div>
 
   <footer>
-    <p>Thank you for your support ❤️</p>
+    <div class="container footer-inner">
+      <div>
+        <strong>John Wayne</strong>
+        <span> • PHC Feedback Center</span>
+      </div>
+      <p>Thank you for your support <span aria-hidden="true">❤</span></p>
+    </div>
   </footer>
 
   <script src="script.js"></script>
