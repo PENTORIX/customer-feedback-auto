@@ -1,32 +1,99 @@
-[
-  {
-    "buyer": "PH Legit transac",
-    "item": "Crayoai",
-    "type": "feedback",
-    "image": "images/feedback/crayoai/genesis-storm-sample.png"
-  },
-  {
-    "buyer": "PH Legit transac",
-    "item": "Esim",
-    "type": "feedback",
-    "image": "images/feedback/esim/genesis-storm-sample.png"
-  },
-  {
-    "buyer": "PH Legit transac",
-    "item": "Iwanttfc",
-    "type": "feedback",
-    "image": "images/feedback/iwanttfc/genesis-storm-sample.png"
-  },
-  {
-    "buyer": "PH Legit transac",
-    "item": "Spotify",
-    "type": "feedback",
-    "image": "images/feedback/spotify/genesis-storm-sample.png"
-  },
-  {
-    "buyer": "PH Legit transac",
-    "item": "Iwanttfc",
-    "type": "resolved",
-    "image": "images/resolved/iwanttfc/genesis-storm-sample.png"
-  }
-]
+from pathlib import Path
+import json
+
+
+ROOT = Path(".")
+VALID_EXT = {
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".webp",
+    ".gif",
+    ".bmp"
+}
+
+# Fixed label.
+# The actual buyer/forum username is already visible
+# inside the uploaded screenshot.
+BUYER_LABEL = "PHC Legit Transaction"
+
+
+entries = []
+
+
+# ============================================================
+# SCAN FEEDBACK AND RESOLVED FOLDERS
+# ============================================================
+
+for root_name in ("feedback", "resolved"):
+
+    root = ROOT / "images" / root_name
+
+    if not root.exists():
+        continue
+
+    # --------------------------------------------------------
+    # Example:
+    #
+    # images/feedback/esim/
+    # images/feedback/iwanttfc/
+    # images/resolved/esim/
+    #
+    # Folder name becomes the product name.
+    # --------------------------------------------------------
+
+    for product_dir in sorted(root.iterdir()):
+
+        if not product_dir.is_dir():
+            continue
+
+        product = product_dir.name
+
+        # Convert:
+        # iwanttfc -> Iwanttfc
+        # my-product -> My Product
+        # my_product -> My Product
+
+        product = product.replace("-", " ")
+        product = product.replace("_", " ")
+        product = product.strip()
+
+        if product:
+            product = product.title()
+        else:
+            product = "Other"
+
+        # ----------------------------------------------------
+        # Find images
+        # ----------------------------------------------------
+
+        for image_path in sorted(product_dir.iterdir()):
+
+            if image_path.suffix.lower() not in VALID_EXT:
+                continue
+
+            entries.append({
+                "buyer": BUYER_LABEL,
+                "item": product,
+                "type": root_name,
+                "image": image_path.as_posix()
+            })
+
+
+# ============================================================
+# WRITE INDEX
+# ============================================================
+
+Path("feedback-index.json").write_text(
+    json.dumps(
+        entries,
+        ensure_ascii=False,
+        indent=2
+    ),
+    encoding="utf-8"
+)
+
+
+print(
+    f"Indexed {len(entries)} images."
+)
